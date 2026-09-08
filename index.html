@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Abhi Collection | Fashion Store</title>
+
+    <meta name="description"
+          content="Abhi Collection - Stylish fashion at affordable prices.">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+
+<header class="header">
+
+    <div class="logo">
+        <span>ABHI</span>
+        <small>COLLECTION</small>
+    </div>
+
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#products">Products</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <button class="cart-button" onclick="openCart()">
+        🛒 Cart
+        <span id="cartCount">0</span>
+    </button>
+
+</header>
+
+
+<!-- ================= HERO ================= -->
+
+<section class="hero" id="home">
+
+    <div class="hero-content">
+
+        <p class="small-title">WELCOME TO</p>
+
+        <h1>
+            ABHI<br>
+            <span>COLLECTION</span>
+        </h1>
+
+        <p>
+            Discover stylish fashion at affordable prices.
+        </p>
+
+        <a href="#products" class="shop-button">
+            Shop Now
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FEATURES ================= -->
+
+<section class="features">
+
+    <div class="feature">
+        <span>✨</span>
+        <h3>Trendy Fashion</h3>
+        <p>Latest styles for you</p>
+    </div>
+
+    <div class="feature">
+        <span>💰</span>
+        <h3>Best Prices</h3>
+        <p>Affordable fashion</p>
+    </div>
+
+    <div class="feature">
+        <span>📱</span>
+        <h3>Easy Ordering</h3>
+        <p>Order directly on WhatsApp</p>
+    </div>
+
+</section>
+
+
+<!-- ================= PRODUCTS ================= -->
+
+<section class="products-section" id="products">
+
+    <div class="section-heading">
+
+        <p>OUR COLLECTION</p>
+
+        <h2>Latest Products</h2>
+
+        <div class="heading-line"></div>
+
+    </div>
+
+
+    <div id="productGrid" class="product-grid">
+
+        <!-- Products will be inserted by JavaScript -->
+
+    </div>
+
+</section>
+
+
+<!-- ================= ABOUT ================= -->
+
+<section class="about" id="about">
+
+    <div class="about-content">
+
+        <p class="small-title">ABOUT US</p>
+
+        <h2>Welcome to Abhi Collection</h2>
+
+        <p>
+            Abhi Collection brings you stylish and affordable fashion
+            with carefully selected products for everyday wear and
+            special occasions.
+        </p>
+
+        <p>
+            Browse our collection, add your favourite products to the
+            cart and order easily through WhatsApp.
+        </p>
+
+    </div>
+
+</section>
+
+
+<!-- ================= LOCATION ================= -->
+
+<section class="location" id="contact">
+
+    <div class="section-heading">
+
+        <p>VISIT OUR SHOP</p>
+
+        <h2>Our Location</h2>
+
+        <div class="heading-line"></div>
+
+    </div>
+
+    <div class="location-box">
+
+        <div class="location-icon">
+            📍
+        </div>
+
+        <h3>Abhi Collection</h3>
+
+        <p>
+            Mahadev Chungi, Dhanaura
+        </p>
+
+        <p>
+            Near Indian Coaching
+        </p>
+
+        <a
+            href="https://www.google.com/maps/search/?api=1&query=Mahadev+Chungi+Dhanaura+Near+Indian+Coaching"
+            target="_blank"
+            class="map-button">
+
+            Open in Google Maps
+
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- ================= SOCIAL ================= -->
+
+<section class="social">
+
+    <div class="section-heading">
+
+        <p>FOLLOW US</p>
+
+        <h2>Stay Connected</h2>
+
+        <div class="heading-line"></div>
+
+    </div>
+
+
+    <div class="social-links">
+
+        <a
+            href="https://www.instagram.com/vikas_tihadiya/"
+            target="_blank">
+
+            📸
+            <span>@vikas_tihadiya</span>
+
+        </a>
+
+
+        <a
+            href="https://www.instagram.com/"
+            target="_blank">
+
+            📸
+            <span>Abhi Collection</span>
+
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer>
+
+    <div class="footer-logo">
+        ABHI COLLECTION
+    </div>
+
+    <p>
+        Mahadev Chungi, Dhanaura · Near Indian Coaching
+    </p>
+
+    <div class="footer-whatsapp">
+
+        <a href="https://wa.me/917088443473" target="_blank">
+            WhatsApp: 7088443473
+        </a>
+
+        <a href="https://wa.me/918958123749" target="_blank">
+            WhatsApp: 8958123749
+        </a>
+
+    </div>
+
+    <p class="copyright">
+        © 2026 Abhi Collection. All Rights Reserved.
+    </p>
+
+</footer>
+
+
+<!-- ================= CART ================= -->
+
+<div id="cartOverlay" class="cart-overlay">
+
+    <div class="cart">
+
+        <div class="cart-header">
+
+            <h2>Your Cart</h2>
+
+            <button onclick="closeCart()">
+                ✕
+            </button>
+
+        </div>
+
+
+        <div id="cartItems" class="cart-items">
+
+            <!-- Cart items appear here -->
+
+        </div>
+
+
+        <div class="cart-total">
+
+            <span>Total</span>
+
+            <strong id="cartTotal">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="whatsapp-order">
+
+            <p>
+                Choose WhatsApp number:
+            </p>
+
+            <button onclick="orderWhatsApp('7088443473')">
+                Order on WhatsApp
+            </button>
+
+            <button onclick="orderWhatsApp('8958123749')">
+                Order on WhatsApp 2
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
