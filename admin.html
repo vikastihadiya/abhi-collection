@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Abhi Collection | Admin</title>
+
+    <link rel="stylesheet" href="admin.css">
+
+</head>
+
+
+<body>
+
+
+<header class="admin-header">
+
+    <div>
+
+        <h1>ABHI COLLECTION</h1>
+
+        <p>Admin Panel</p>
+
+    </div>
+
+
+    <a
+        href="index.html"
+        target="_blank">
+
+        View Website →
+
+    </a>
+
+</header>
+
+
+
+<main class="admin-container">
+
+
+    <section class="admin-card">
+
+        <h2>Add New Product</h2>
+
+        <p class="subtitle">
+            Enter product information below.
+        </p>
+
+
+        <form id="productForm">
+
+
+            <!-- PRODUCT NAME -->
+
+            <label>
+                Product Name
+            </label>
+
+            <input
+                type="text"
+                id="productName"
+                placeholder="Example: Designer Kurti"
+                required
+            >
+
+
+            <!-- PRICE -->
+
+            <div class="two-columns">
+
+                <div>
+
+                    <label>
+                        Selling Price
+                    </label>
+
+                    <input
+                        type="number"
+                        id="productPrice"
+                        placeholder="699"
+                        required
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        MRP
+                    </label>
+
+                    <input
+                        type="number"
+                        id="productMRP"
+                        placeholder="999"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+
+            <label>
+                Description
+            </label>
+
+            <textarea
+                id="productDescription"
+                placeholder="Write product description..."
+                required>
+            </textarea>
+
+
+            <!-- SIZES -->
+
+            <label>
+                Available Sizes
+            </label>
+
+            <input
+                type="text"
+                id="productSizes"
+                placeholder="S, M, L, XL"
+            >
+
+
+            <!-- IMAGES -->
+
+            <label>
+                Product Photos
+            </label>
+
+            <p class="help">
+                Select 4–5 photos of this product.
+            </p>
+
+            <input
+                type="file"
+                id="productImages"
+                accept="image/*"
+                multiple
+            >
+
+
+            <div
+                id="imagePreview"
+                class="image-preview">
+            </div>
+
+
+            <!-- SUBMIT -->
+
+            <button
+                type="submit"
+                class="save-button">
+
+                Save Product
+
+            </button>
+
+
+        </form>
+
+    </section>
+
+
+
+    <section class="admin-card">
+
+        <h2>Products</h2>
+
+        <div
+            id="adminProducts"
+            class="admin-products">
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+<script src="admin.js"></script>
+
+</body>
+
+</html>
