@@ -1,3 +1,92 @@
+/* ================= ADMIN LOGIN ================= */
+
+const loginForm = document.getElementById("loginForm");
+const loginSection = document.getElementById("loginSection");
+
+const adminContainer =
+    document.querySelector(".admin-container");
+
+
+async function checkAdminLogin() {
+
+    const {
+        data: {
+            session
+        }
+    } = await supabaseClient.auth.getSession();
+
+
+    if (session) {
+
+        loginSection.style.display = "none";
+        adminContainer.style.display = "block";
+
+    } else {
+
+        loginSection.style.display = "block";
+        adminContainer.style.display = "none";
+
+    }
+}
+
+
+loginForm.addEventListener("submit", async function (event) {
+
+    event.preventDefault();
+
+
+    const email =
+        document.getElementById("adminEmail").value.trim();
+
+    const password =
+        document.getElementById("adminPassword").value;
+
+
+    const loginMessage =
+        document.getElementById("loginMessage");
+
+
+    loginMessage.textContent = "Logging in...";
+
+
+    const {
+        data,
+        error
+    } = await supabaseClient.auth.signInWithPassword({
+
+        email: email,
+
+        password: password
+
+    });
+
+
+    if (error) {
+
+        console.error(error);
+
+        loginMessage.textContent =
+            "Login failed: " + error.message;
+
+        return;
+    }
+
+
+    loginMessage.textContent =
+        "Login successful!";
+
+
+    checkAdminLogin();
+
+});
+
+
+/* ================= CHECK LOGIN ================= */
+
+checkAdminLogin();
+
+
+
 /* =====================================================
    ABHI COLLECTION
    ADMIN PANEL — SUPABASE
