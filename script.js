@@ -1,11 +1,6 @@
 /* =====================================================
    ABHI COLLECTION
-   PUBLIC WEBSITE — SUPABASE + PRODUCT GALLERY
-===================================================== */
-
-
-/* =====================================================
-   CART
+   PUBLIC WEBSITE — SUPABASE + PRODUCT GALLERY + SIZES
 ===================================================== */
 
 let cart = [];
@@ -13,10 +8,6 @@ let cart = [];
 
 /* =====================================================
    IMAGE DATA HELPER
-   Supports:
-   - Array
-   - JSON text array
-   - Single URL
 ===================================================== */
 
 function getImagesArray(images) {
@@ -25,12 +16,10 @@ function getImagesArray(images) {
         return [];
     }
 
-    /* Already an array */
     if (Array.isArray(images)) {
         return images.filter(Boolean);
     }
 
-    /* Text stored in Supabase */
     if (typeof images === "string") {
 
         try {
@@ -47,7 +36,6 @@ function getImagesArray(images) {
 
         } catch (error) {
 
-            /* If it is simply a URL */
             if (
                 images.startsWith("http://") ||
                 images.startsWith("https://")
@@ -72,7 +60,7 @@ function getSizesArray(sizes) {
     }
 
     if (Array.isArray(sizes)) {
-        return sizes;
+        return sizes.filter(Boolean);
     }
 
     if (typeof sizes === "string") {
@@ -82,7 +70,7 @@ function getSizesArray(sizes) {
             const parsed = JSON.parse(sizes);
 
             if (Array.isArray(parsed)) {
-                return parsed;
+                return parsed.filter(Boolean);
             }
 
         } catch (error) {
@@ -119,17 +107,19 @@ function updateCartCount() {
    ADD TO CART
 ===================================================== */
 
-function addToCart(productName, price) {
+function addToCart(productName, price, size = "") {
 
     cart.push({
         name: productName,
-        price: Number(price)
+        price: Number(price),
+        size: size
     });
 
     updateCartCount();
 
     alert(
         productName +
+        (size ? " — Size: " + size : "") +
         " has been added to your cart."
     );
 }
@@ -161,15 +151,28 @@ function showCart() {
             (index + 1) +
             ". " +
             item.name +
-            " - ₹" +
+            "\n";
+
+        message +=
+            "Price: ₹" +
             item.price +
             "\n";
+
+        if (item.size) {
+
+            message +=
+                "Size: " +
+                item.size +
+                "\n";
+        }
+
+        message += "\n";
 
         total += Number(item.price);
     });
 
     message +=
-        "\nTotal: ₹" +
+        "Total: ₹" +
         total;
 
     message +=
@@ -183,26 +186,34 @@ function showCart() {
    WHATSAPP ORDER
 ===================================================== */
 
-function orderOnWhatsApp(productName, price) {
-
-    const phoneNumbers = [
-        "7088443473",
-        "8958123749"
-    ];
+function orderOnWhatsApp(
+    productName,
+    price,
+    size = ""
+) {
 
     const message =
-        "Hello Abhi Collection,%0A%0A" +
-        "I want to order:%0A" +
+        "Hello Abhi Collection,\n\n" +
+        "I want to order:\n" +
+        "Product: " +
         productName +
-        "%0APrice: ₹" +
+        "\n" +
+        "Price: ₹" +
         price +
-        "%0A%0APlease share availability and order details.";
+        "\n" +
+        (
+            size
+                ? "Size: " + size + "\n"
+                : ""
+        ) +
+        "\nPlease share availability and order details.";
+
+    const encodedMessage =
+        encodeURIComponent(message);
 
     const whatsappURL =
-        "https://wa.me/" +
-        phoneNumbers[0] +
-        "?text=" +
-        message;
+        "https://wa.me/7088443473?text=" +
+        encodedMessage;
 
     window.open(
         whatsappURL,
@@ -215,7 +226,10 @@ function orderOnWhatsApp(productName, price) {
    PRODUCT GALLERY
 ===================================================== */
 
-function createProductGallery(images, productName) {
+function createProductGallery(
+    images,
+    productName
+) {
 
     const gallery =
         document.createElement("div");
@@ -224,9 +238,7 @@ function createProductGallery(images, productName) {
         "product-gallery";
 
 
-    /* =================================================
-       MAIN IMAGE
-    ================================================= */
+    /* MAIN IMAGE */
 
     const mainImageContainer =
         document.createElement("div");
@@ -279,9 +291,7 @@ function createProductGallery(images, productName) {
     );
 
 
-    /* =================================================
-       THUMBNAILS
-    ================================================= */
+    /* THUMBNAILS */
 
     if (images.length > 1) {
 
@@ -330,10 +340,6 @@ function createProductGallery(images, productName) {
                 );
 
 
-                /* ===============================
-                   CHANGE MAIN IMAGE
-                =============================== */
-
                 thumbnailButton.addEventListener(
                     "click",
                     function () {
@@ -342,7 +348,7 @@ function createProductGallery(images, productName) {
                             imageURL;
 
 
-                        document
+                        thumbnails
                             .querySelectorAll(
                                 ".product-thumbnail"
                             )
@@ -381,6 +387,138 @@ function createProductGallery(images, productName) {
 
 
 /* =====================================================
+   CREATE SIZE SELECTOR
+===================================================== */
+
+function createSizeSelector(
+    sizes,
+    productCard
+) {
+
+    if (sizes.length === 0) {
+        return null;
+    }
+
+
+    const sizeSection =
+        document.createElement("div");
+
+    sizeSection.className =
+        "size-selection";
+
+
+    /* LABEL */
+
+    const sizeLabel =
+        document.createElement("div");
+
+    sizeLabel.className =
+        "size-label";
+
+    sizeLabel.textContent =
+        "Select Size:";
+
+
+    sizeSection.appendChild(
+        sizeLabel
+    );
+
+
+    /* SIZE BUTTONS */
+
+    const sizeButtons =
+        document.createElement("div");
+
+    sizeButtons.className =
+        "size-buttons";
+
+
+    sizes.forEach(
+        size => {
+
+            const button =
+                document.createElement("button");
+
+            button.type =
+                "button";
+
+            button.className =
+                "size-button";
+
+            button.textContent =
+                size;
+
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    /* Remove selection */
+                    sizeButtons
+                        .querySelectorAll(
+                            ".size-button"
+                        )
+                        .forEach(
+                            btn => {
+
+                                btn.classList.remove(
+                                    "selected"
+                                );
+                            }
+                        );
+
+
+                    /* Select clicked size */
+                    button.classList.add(
+                        "selected"
+                    );
+
+
+                    /* Save selected size */
+                    productCard.dataset.selectedSize =
+                        size;
+                }
+            );
+
+
+            sizeButtons.appendChild(
+                button
+            );
+        }
+    );
+
+
+    sizeSection.appendChild(
+        sizeButtons
+    );
+
+
+    /* REQUIRED MESSAGE */
+
+    const message =
+        document.createElement("small");
+
+    message.className =
+        "size-required-message";
+
+    message.textContent =
+        "Please select a size.";
+
+
+    message.style.display =
+        "none";
+
+
+    sizeSection.appendChild(
+        message
+    );
+
+
+    return sizeSection;
+}
+
+
+/* =====================================================
    CREATE PRODUCT CARD
 ===================================================== */
 
@@ -394,7 +532,7 @@ function createProductCard(product) {
 
 
     /* =================================================
-       PRODUCT IMAGES
+       IMAGES
     ================================================= */
 
     const images =
@@ -402,10 +540,6 @@ function createProductCard(product) {
             product.images
         );
 
-
-    /* =================================================
-       GALLERY
-    ================================================= */
 
     const gallery =
         createProductGallery(
@@ -430,9 +564,7 @@ function createProductCard(product) {
         "product-info";
 
 
-    /* =================================================
-       PRODUCT NAME
-    ================================================= */
+    /* PRODUCT NAME */
 
     const title =
         document.createElement("h3");
@@ -448,7 +580,7 @@ function createProductCard(product) {
 
 
     /* =================================================
-       PRICE AREA
+       PRICE
     ================================================= */
 
     const priceRow =
@@ -470,8 +602,6 @@ function createProductCard(product) {
         price
     );
 
-
-    /* MRP */
 
     if (
         product.mrp &&
@@ -530,36 +660,17 @@ function createProductCard(product) {
         );
 
 
-    if (sizes.length > 0) {
-
-        const sizeText =
-            document.createElement("p");
-
-        sizeText.className =
-            "product-sizes";
-
-
-        const sizeLabel =
-            document.createElement("strong");
-
-        sizeLabel.textContent =
-            "Sizes: ";
-
-
-        sizeText.appendChild(
-            sizeLabel
+    const sizeSelector =
+        createSizeSelector(
+            sizes,
+            card
         );
 
 
-        sizeText.appendChild(
-            document.createTextNode(
-                sizes.join(", ")
-            )
-        );
-
+    if (sizeSelector) {
 
         productInfo.appendChild(
-            sizeText
+            sizeSelector
         );
     }
 
@@ -594,9 +705,48 @@ function createProductCard(product) {
         "click",
         function () {
 
+            let selectedSize = "";
+
+
+            /* Product has sizes */
+            if (sizes.length > 0) {
+
+                selectedSize =
+                    card.dataset.selectedSize ||
+                    "";
+
+
+                if (!selectedSize) {
+
+                    if (sizeSelector) {
+
+                        const message =
+                            sizeSelector
+                                .querySelector(
+                                    ".size-required-message"
+                                );
+
+                        if (message) {
+
+                            message.style.display =
+                                "block";
+                        }
+                    }
+
+
+                    alert(
+                        "Please select a size first."
+                    );
+
+                    return;
+                }
+            }
+
+
             addToCart(
                 product.name,
-                product.price
+                product.price,
+                selectedSize
             );
         }
     );
@@ -628,9 +778,47 @@ function createProductCard(product) {
         "click",
         function () {
 
+            let selectedSize = "";
+
+
+            if (sizes.length > 0) {
+
+                selectedSize =
+                    card.dataset.selectedSize ||
+                    "";
+
+
+                if (!selectedSize) {
+
+                    if (sizeSelector) {
+
+                        const message =
+                            sizeSelector
+                                .querySelector(
+                                    ".size-required-message"
+                                );
+
+                        if (message) {
+
+                            message.style.display =
+                                "block";
+                        }
+                    }
+
+
+                    alert(
+                        "Please select a size first."
+                    );
+
+                    return;
+                }
+            }
+
+
             orderOnWhatsApp(
                 product.name,
-                product.price
+                product.price,
+                selectedSize
             );
         }
     );
@@ -646,9 +834,7 @@ function createProductCard(product) {
     );
 
 
-    /* =================================================
-       FINISH CARD
-    ================================================= */
+    /* FINISH CARD */
 
     card.appendChild(
         productInfo
@@ -660,7 +846,7 @@ function createProductCard(product) {
 
 
 /* =====================================================
-   PRODUCT PAGE STYLING
+   WEBSITE STYLING
 ===================================================== */
 
 function setupProductLayout() {
@@ -668,14 +854,14 @@ function setupProductLayout() {
     const style =
         document.createElement("style");
 
+
     style.textContent = `
 
-        /* ==========================================
-           PRODUCT GRID
-        ========================================== */
+        /* PRODUCT GRID */
 
         .product-grid {
             display: grid !important;
+
             grid-template-columns:
                 repeat(
                     auto-fill,
@@ -687,16 +873,16 @@ function setupProductLayout() {
             max-width: 1200px !important;
 
             margin-left: auto !important;
+
             margin-right: auto !important;
 
             padding-left: 16px !important;
+
             padding-right: 16px !important;
         }
 
 
-        /* ==========================================
-           PRODUCT CARD
-        ========================================== */
+        /* PRODUCT CARD */
 
         .product-card {
             width: 100% !important;
@@ -704,6 +890,7 @@ function setupProductLayout() {
             max-width: 280px !important;
 
             margin-left: auto !important;
+
             margin-right: auto !important;
 
             overflow: hidden !important;
@@ -712,9 +899,7 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           PRODUCT GALLERY
-        ========================================== */
+        /* GALLERY */
 
         .product-gallery {
             width: 100% !important;
@@ -723,9 +908,7 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           MAIN IMAGE AREA
-        ========================================== */
+        /* MAIN IMAGE */
 
         .product-main-image {
             width: 100% !important;
@@ -748,10 +931,6 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           MAIN IMAGE
-        ========================================== */
-
         .main-product-image {
             width: 100% !important;
 
@@ -767,9 +946,7 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           THUMBNAILS
-        ========================================== */
+        /* THUMBNAILS */
 
         .product-thumbnails {
             display: flex !important;
@@ -787,10 +964,6 @@ function setupProductLayout() {
             box-sizing: border-box !important;
         }
 
-
-        /* ==========================================
-           THUMBNAIL BUTTON
-        ========================================== */
 
         .product-thumbnail {
             width: 58px !important;
@@ -815,18 +988,10 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           ACTIVE THUMBNAIL
-        ========================================== */
-
         .product-thumbnail.active {
             border: 2px solid #111 !important;
         }
 
-
-        /* ==========================================
-           THUMBNAIL IMAGE
-        ========================================== */
 
         .product-thumbnail img {
             width: 100% !important;
@@ -839,30 +1004,86 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           NO IMAGE
-        ========================================== */
+        /* =================================================
+           SIZE SELECTION
+        ================================================= */
 
-        .no-product-image {
-            display: flex !important;
+        .size-selection {
+            margin-top: 12px !important;
 
-            align-items: center !important;
-
-            justify-content: center !important;
-
-            width: 100% !important;
-
-            height: 100% !important;
-
-            color: #777 !important;
-
-            font-size: 14px !important;
+            margin-bottom: 10px !important;
         }
 
 
-        /* ==========================================
-           PRODUCT INFO
-        ========================================== */
+        .size-label {
+            font-size: 14px !important;
+
+            font-weight: 600 !important;
+
+            margin-bottom: 7px !important;
+        }
+
+
+        .size-buttons {
+            display: flex !important;
+
+            flex-wrap: wrap !important;
+
+            gap: 7px !important;
+        }
+
+
+        .size-button {
+            min-width: 42px !important;
+
+            height: 38px !important;
+
+            padding: 5px 10px !important;
+
+            background: white !important;
+
+            color: #111 !important;
+
+            border: 1px solid #bbb !important;
+
+            border-radius: 6px !important;
+
+            cursor: pointer !important;
+
+            font-size: 14px !important;
+
+            font-weight: 500 !important;
+
+            transition: 0.2s ease !important;
+        }
+
+
+        .size-button:hover {
+            border-color: #111 !important;
+        }
+
+
+        .size-button.selected {
+            background: #111 !important;
+
+            color: white !important;
+
+            border-color: #111 !important;
+        }
+
+
+        .size-required-message {
+            display: block !important;
+
+            color: #c00 !important;
+
+            margin-top: 6px !important;
+
+            font-size: 12px !important;
+        }
+
+
+        /* PRODUCT INFO */
 
         .product-info {
             padding-top: 12px !important;
@@ -874,9 +1095,7 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           PRICE
-        ========================================== */
+        /* PRICE */
 
         .product-price-row {
             display: flex !important;
@@ -901,9 +1120,7 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           DESCRIPTION
-        ========================================== */
+        /* DESCRIPTION */
 
         .product-description {
             font-size: 14px !important;
@@ -912,18 +1129,7 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           SIZES
-        ========================================== */
-
-        .product-sizes {
-            font-size: 14px !important;
-        }
-
-
-        /* ==========================================
-           BUTTONS
-        ========================================== */
+        /* BUTTONS */
 
         .product-buttons {
             display: flex !important;
@@ -963,9 +1169,7 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           TABLET
-        ========================================== */
+        /* MOBILE / TABLET */
 
         @media (max-width: 768px) {
 
@@ -996,10 +1200,6 @@ function setupProductLayout() {
         }
 
 
-        /* ==========================================
-           MOBILE
-        ========================================== */
-
         @media (max-width: 520px) {
 
             .product-grid {
@@ -1012,6 +1212,7 @@ function setupProductLayout() {
                 gap: 12px !important;
 
                 padding-left: 8px !important;
+
                 padding-right: 8px !important;
             }
 
@@ -1038,16 +1239,26 @@ function setupProductLayout() {
 
                 min-width: 50px !important;
             }
+
+
+            .size-button {
+                min-width: 38px !important;
+
+                height: 36px !important;
+            }
         }
 
     `;
 
-    document.head.appendChild(style);
+
+    document.head.appendChild(
+        style
+    );
 }
 
 
 /* =====================================================
-   LOAD PRODUCTS FROM SUPABASE
+   LOAD PRODUCTS
 ===================================================== */
 
 async function loadProducts() {
@@ -1090,7 +1301,6 @@ async function loadProducts() {
 
 
         if (error) {
-
             throw error;
         }
 
@@ -1098,10 +1308,6 @@ async function loadProducts() {
         productGrid.innerHTML =
             "";
 
-
-        /* ==========================================
-           NO PRODUCTS
-        ========================================== */
 
         if (
             !products ||
@@ -1120,10 +1326,6 @@ async function loadProducts() {
             return;
         }
 
-
-        /* ==========================================
-           DISPLAY PRODUCTS
-        ========================================== */
 
         products.forEach(
             product => {
@@ -1181,11 +1383,6 @@ function setupCartButton() {
     }
 
 
-    /*
-       Also support a button
-       with class .cart-button
-    */
-
     const alternativeCartButton =
         document.querySelector(
             ".cart-button"
@@ -1206,7 +1403,7 @@ function setupCartButton() {
 
 
 /* =====================================================
-   MAKE FUNCTIONS AVAILABLE
+   GLOBAL FUNCTIONS
 ===================================================== */
 
 window.addToCart =
@@ -1220,7 +1417,7 @@ window.orderOnWhatsApp =
 
 
 /* =====================================================
-   START WEBSITE
+   START
 ===================================================== */
 
 document.addEventListener(
