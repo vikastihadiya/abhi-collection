@@ -1,13 +1,14 @@
 /* =====================================================
    ABHI COLLECTION
-   PUBLIC WEBSITE — SUPABASE + PRODUCT GALLERY + SIZES
+   PUBLIC WEBSITE
+   SUPABASE + PRODUCT GALLERY + SIZES + CART
 ===================================================== */
 
 let cart = [];
 
 
 /* =====================================================
-   IMAGE DATA HELPER
+   IMAGE HELPER
 ===================================================== */
 
 function getImagesArray(images) {
@@ -24,7 +25,8 @@ function getImagesArray(images) {
 
         try {
 
-            const parsed = JSON.parse(images);
+            const parsed =
+                JSON.parse(images);
 
             if (Array.isArray(parsed)) {
                 return parsed.filter(Boolean);
@@ -50,7 +52,7 @@ function getImagesArray(images) {
 
 
 /* =====================================================
-   SIZE DATA HELPER
+   SIZE HELPER
 ===================================================== */
 
 function getSizesArray(sizes) {
@@ -67,7 +69,8 @@ function getSizesArray(sizes) {
 
         try {
 
-            const parsed = JSON.parse(sizes);
+            const parsed =
+                JSON.parse(sizes);
 
             if (Array.isArray(parsed)) {
                 return parsed.filter(Boolean);
@@ -87,19 +90,65 @@ function getSizesArray(sizes) {
 
 
 /* =====================================================
-   UPDATE CART COUNT
+   CART COUNT
 ===================================================== */
 
 function updateCartCount() {
 
-    const cartCount =
+    /*
+       Try the main cart-count ID first.
+    */
+
+    let cartCount =
         document.getElementById("cart-count");
 
+
+    /*
+       Also support common alternatives.
+       This makes the counter more reliable.
+    */
+
     if (!cartCount) {
+
+        cartCount =
+            document.querySelector(
+                ".cart-count"
+            );
+    }
+
+
+    if (!cartCount) {
+
+        cartCount =
+            document.querySelector(
+                "[data-cart-count]"
+            );
+    }
+
+
+    if (!cartCount) {
+        console.warn(
+            "Cart count element not found."
+        );
+
         return;
     }
 
-    cartCount.textContent = cart.length;
+
+    /*
+       Number of products in cart.
+    */
+
+    cartCount.textContent =
+        String(cart.length);
+
+
+    /*
+       Make sure it is visible.
+    */
+
+    cartCount.style.display =
+        "inline-flex";
 }
 
 
@@ -107,19 +156,35 @@ function updateCartCount() {
    ADD TO CART
 ===================================================== */
 
-function addToCart(productName, price, size = "") {
+function addToCart(
+    productName,
+    price,
+    size = ""
+) {
 
     cart.push({
+
         name: productName,
+
         price: Number(price),
+
         size: size
     });
 
+
+    /*
+       IMPORTANT:
+       Update immediately after adding.
+    */
+
     updateCartCount();
+
 
     alert(
         productName +
-        (size ? " — Size: " + size : "") +
+        (size
+            ? " — Size: " + size
+            : "") +
         " has been added to your cart."
     );
 }
@@ -140,43 +205,56 @@ function showCart() {
         return;
     }
 
+
     let message =
         "Your Abhi Collection Cart\n\n";
 
+
     let total = 0;
 
-    cart.forEach((item, index) => {
 
-        message +=
-            (index + 1) +
-            ". " +
-            item.name +
-            "\n";
-
-        message +=
-            "Price: ₹" +
-            item.price +
-            "\n";
-
-        if (item.size) {
+    cart.forEach(
+        (item, index) => {
 
             message +=
-                "Size: " +
-                item.size +
+                (index + 1) +
+                ". " +
+                item.name +
                 "\n";
+
+
+            message +=
+                "Price: ₹" +
+                item.price +
+                "\n";
+
+
+            if (item.size) {
+
+                message +=
+                    "Size: " +
+                    item.size +
+                    "\n";
+            }
+
+
+            message += "\n";
+
+
+            total +=
+                Number(item.price);
         }
+    );
 
-        message += "\n";
-
-        total += Number(item.price);
-    });
 
     message +=
         "Total: ₹" +
         total;
 
+
     message +=
         "\n\nTo order, contact us on WhatsApp.";
+
 
     alert(message);
 }
@@ -208,12 +286,15 @@ function orderOnWhatsApp(
         ) +
         "\nPlease share availability and order details.";
 
+
     const encodedMessage =
         encodeURIComponent(message);
+
 
     const whatsappURL =
         "https://wa.me/7088443473?text=" +
         encodedMessage;
+
 
     window.open(
         whatsappURL,
@@ -224,6 +305,7 @@ function orderOnWhatsApp(
 
 /* =====================================================
    PRODUCT GALLERY
+   SUPPORTS UP TO 10 IMAGES
 ===================================================== */
 
 function createProductGallery(
@@ -286,6 +368,7 @@ function createProductGallery(
         mainImage
     );
 
+
     gallery.appendChild(
         mainImageContainer
     );
@@ -302,11 +385,18 @@ function createProductGallery(
             "product-thumbnails";
 
 
-        images.forEach(
+        /*
+           All uploaded images are displayed here.
+           Maximum supported = 10.
+        */
+
+        images.slice(0, 10).forEach(
             (imageURL, index) => {
 
                 const thumbnailButton =
-                    document.createElement("button");
+                    document.createElement(
+                        "button"
+                    );
 
                 thumbnailButton.type =
                     "button";
@@ -324,7 +414,9 @@ function createProductGallery(
 
 
                 const thumbnailImage =
-                    document.createElement("img");
+                    document.createElement(
+                        "img"
+                    );
 
                 thumbnailImage.src =
                     imageURL;
@@ -387,7 +479,7 @@ function createProductGallery(
 
 
 /* =====================================================
-   CREATE SIZE SELECTOR
+   SIZE SELECTOR
 ===================================================== */
 
 function createSizeSelector(
@@ -407,8 +499,6 @@ function createSizeSelector(
         "size-selection";
 
 
-    /* LABEL */
-
     const sizeLabel =
         document.createElement("div");
 
@@ -424,8 +514,6 @@ function createSizeSelector(
     );
 
 
-    /* SIZE BUTTONS */
-
     const sizeButtons =
         document.createElement("div");
 
@@ -433,67 +521,73 @@ function createSizeSelector(
         "size-buttons";
 
 
-    sizes.forEach(
-        size => {
+    sizes.forEach(size => {
 
-            const button =
-                document.createElement("button");
+        const button =
+            document.createElement(
+                "button"
+            );
 
-            button.type =
-                "button";
+        button.type =
+            "button";
 
-            button.className =
-                "size-button";
+        button.className =
+            "size-button";
 
-            button.textContent =
-                size;
+        button.textContent =
+            size;
 
 
-            button.addEventListener(
-                "click",
-                function () {
+        button.addEventListener(
+            "click",
+            function () {
 
-                    /* Remove selection */
-                    sizeButtons
-                        .querySelectorAll(
-                            ".size-button"
-                        )
-                        .forEach(
-                            btn => {
+                sizeButtons
+                    .querySelectorAll(
+                        ".size-button"
+                    )
+                    .forEach(btn => {
 
-                                btn.classList.remove(
-                                    "selected"
-                                );
-                            }
+                        btn.classList.remove(
+                            "selected"
                         );
+                    });
 
 
-                    /* Select clicked size */
-                    button.classList.add(
-                        "selected"
+                button.classList.add(
+                    "selected"
+                );
+
+
+                productCard.dataset.selectedSize =
+                    size;
+
+
+                const message =
+                    sizeSection.querySelector(
+                        ".size-required-message"
                     );
 
 
-                    /* Save selected size */
-                    productCard.dataset.selectedSize =
-                        size;
+                if (message) {
+
+                    message.style.display =
+                        "none";
                 }
-            );
+            }
+        );
 
 
-            sizeButtons.appendChild(
-                button
-            );
-        }
-    );
+        sizeButtons.appendChild(
+            button
+        );
+    });
 
 
     sizeSection.appendChild(
         sizeButtons
     );
 
-
-    /* REQUIRED MESSAGE */
 
     const message =
         document.createElement("small");
@@ -503,7 +597,6 @@ function createSizeSelector(
 
     message.textContent =
         "Please select a size.";
-
 
     message.style.display =
         "none";
@@ -519,7 +612,7 @@ function createSizeSelector(
 
 
 /* =====================================================
-   CREATE PRODUCT CARD
+   PRODUCT CARD
 ===================================================== */
 
 function createProductCard(product) {
@@ -531,9 +624,7 @@ function createProductCard(product) {
         "product-card";
 
 
-    /* =================================================
-       IMAGES
-    ================================================= */
+    /* IMAGES */
 
     const images =
         getImagesArray(
@@ -553,9 +644,7 @@ function createProductCard(product) {
     );
 
 
-    /* =================================================
-       PRODUCT INFO
-    ================================================= */
+    /* PRODUCT INFO */
 
     const productInfo =
         document.createElement("div");
@@ -564,14 +653,13 @@ function createProductCard(product) {
         "product-info";
 
 
-    /* PRODUCT NAME */
+    /* NAME */
 
     const title =
         document.createElement("h3");
 
     title.textContent =
-        product.name ||
-        "Product";
+        product.name || "Product";
 
 
     productInfo.appendChild(
@@ -579,9 +667,7 @@ function createProductCard(product) {
     );
 
 
-    /* =================================================
-       PRICE
-    ================================================= */
+    /* PRICE */
 
     const priceRow =
         document.createElement("div");
@@ -628,9 +714,7 @@ function createProductCard(product) {
     );
 
 
-    /* =================================================
-       DESCRIPTION
-    ================================================= */
+    /* DESCRIPTION */
 
     if (product.description) {
 
@@ -650,9 +734,7 @@ function createProductCard(product) {
     }
 
 
-    /* =================================================
-       SIZES
-    ================================================= */
+    /* SIZES */
 
     const sizes =
         getSizesArray(
@@ -675,9 +757,7 @@ function createProductCard(product) {
     }
 
 
-    /* =================================================
-       BUTTON AREA
-    ================================================= */
+    /* BUTTON AREA */
 
     const buttonArea =
         document.createElement("div");
@@ -708,7 +788,6 @@ function createProductCard(product) {
             let selectedSize = "";
 
 
-            /* Product has sizes */
             if (sizes.length > 0) {
 
                 selectedSize =
@@ -721,10 +800,9 @@ function createProductCard(product) {
                     if (sizeSelector) {
 
                         const message =
-                            sizeSelector
-                                .querySelector(
-                                    ".size-required-message"
-                                );
+                            sizeSelector.querySelector(
+                                ".size-required-message"
+                            );
 
                         if (message) {
 
@@ -757,9 +835,7 @@ function createProductCard(product) {
     );
 
 
-    /* =================================================
-       WHATSAPP BUTTON
-    ================================================= */
+    /* WHATSAPP */
 
     const whatsappButton =
         document.createElement("button");
@@ -793,10 +869,9 @@ function createProductCard(product) {
                     if (sizeSelector) {
 
                         const message =
-                            sizeSelector
-                                .querySelector(
-                                    ".size-required-message"
-                                );
+                            sizeSelector.querySelector(
+                                ".size-required-message"
+                            );
 
                         if (message) {
 
@@ -834,8 +909,6 @@ function createProductCard(product) {
     );
 
 
-    /* FINISH CARD */
-
     card.appendChild(
         productInfo
     );
@@ -846,7 +919,7 @@ function createProductCard(product) {
 
 
 /* =====================================================
-   WEBSITE STYLING
+   PRODUCT STYLING
 ===================================================== */
 
 function setupProductLayout() {
@@ -857,133 +930,82 @@ function setupProductLayout() {
 
     style.textContent = `
 
-        /* PRODUCT GRID */
-
         .product-grid {
             display: grid !important;
-
             grid-template-columns:
                 repeat(
                     auto-fill,
                     minmax(220px, 1fr)
                 ) !important;
-
             gap: 24px !important;
-
             max-width: 1200px !important;
-
             margin-left: auto !important;
-
             margin-right: auto !important;
-
             padding-left: 16px !important;
-
             padding-right: 16px !important;
         }
 
 
-        /* PRODUCT CARD */
-
         .product-card {
             width: 100% !important;
-
             max-width: 280px !important;
-
             margin-left: auto !important;
-
             margin-right: auto !important;
-
             overflow: hidden !important;
-
             box-sizing: border-box !important;
         }
 
-
-        /* GALLERY */
 
         .product-gallery {
             width: 100% !important;
-
             box-sizing: border-box !important;
         }
 
 
-        /* MAIN IMAGE */
-
         .product-main-image {
             width: 100% !important;
-
             height: 280px !important;
-
             display: flex !important;
-
             align-items: center !important;
-
             justify-content: center !important;
-
             overflow: hidden !important;
-
             background: #f7f7f7 !important;
-
             border-radius: 10px !important;
-
             box-sizing: border-box !important;
         }
 
 
         .main-product-image {
             width: 100% !important;
-
             height: 280px !important;
-
             max-width: 100% !important;
-
             object-fit: contain !important;
-
             display: block !important;
-
             margin: 0 !important;
         }
 
 
-        /* THUMBNAILS */
-
         .product-thumbnails {
             display: flex !important;
-
             gap: 8px !important;
-
             margin-top: 10px !important;
-
             overflow-x: auto !important;
-
             padding-bottom: 4px !important;
-
             width: 100% !important;
-
             box-sizing: border-box !important;
         }
 
 
         .product-thumbnail {
             width: 58px !important;
-
             height: 58px !important;
-
             min-width: 58px !important;
-
             padding: 2px !important;
-
             border: 1px solid #ddd !important;
-
             background: white !important;
-
             border-radius: 7px !important;
-
             cursor: pointer !important;
-
             overflow: hidden !important;
-
             box-sizing: border-box !important;
         }
 
@@ -995,115 +1017,69 @@ function setupProductLayout() {
 
         .product-thumbnail img {
             width: 100% !important;
-
             height: 100% !important;
-
             object-fit: cover !important;
-
             display: block !important;
         }
 
 
-        /* =================================================
-           SIZE SELECTION
-        ================================================= */
-
         .size-selection {
             margin-top: 12px !important;
-
             margin-bottom: 10px !important;
         }
 
 
         .size-label {
             font-size: 14px !important;
-
             font-weight: 600 !important;
-
             margin-bottom: 7px !important;
         }
 
 
         .size-buttons {
             display: flex !important;
-
             flex-wrap: wrap !important;
-
             gap: 7px !important;
         }
 
 
         .size-button {
             min-width: 42px !important;
-
             height: 38px !important;
-
             padding: 5px 10px !important;
-
             background: white !important;
-
             color: #111 !important;
-
             border: 1px solid #bbb !important;
-
             border-radius: 6px !important;
-
             cursor: pointer !important;
-
             font-size: 14px !important;
-
             font-weight: 500 !important;
-
-            transition: 0.2s ease !important;
-        }
-
-
-        .size-button:hover {
-            border-color: #111 !important;
         }
 
 
         .size-button.selected {
             background: #111 !important;
-
             color: white !important;
-
             border-color: #111 !important;
         }
 
 
         .size-required-message {
-            display: block !important;
-
             color: #c00 !important;
-
             margin-top: 6px !important;
-
             font-size: 12px !important;
         }
 
-
-        /* PRODUCT INFO */
 
         .product-info {
             padding-top: 12px !important;
         }
 
 
-        .product-info h3 {
-            margin-top: 0 !important;
-        }
-
-
-        /* PRICE */
-
         .product-price-row {
             display: flex !important;
-
             align-items: center !important;
-
             gap: 8px !important;
-
             margin: 6px 0 !important;
         }
 
@@ -1115,38 +1091,27 @@ function setupProductLayout() {
 
         .product-price-row del {
             color: #777 !important;
-
             font-size: 14px !important;
         }
 
 
-        /* DESCRIPTION */
-
         .product-description {
             font-size: 14px !important;
-
             line-height: 1.5 !important;
         }
 
 
-        /* BUTTONS */
-
         .product-buttons {
             display: flex !important;
-
             flex-direction: column !important;
-
             gap: 8px !important;
-
             margin-top: 10px !important;
         }
 
 
         .product-buttons button {
             width: 100% !important;
-
             box-sizing: border-box !important;
-
             cursor: pointer !important;
         }
 
@@ -1158,18 +1123,12 @@ function setupProductLayout() {
 
         .whatsapp-order {
             padding: 10px 14px !important;
-
             border: 1px solid #111 !important;
-
             background: white !important;
-
             color: #111 !important;
-
             border-radius: 6px !important;
         }
 
-
-        /* MOBILE / TABLET */
 
         @media (max-width: 768px) {
 
@@ -1179,7 +1138,6 @@ function setupProductLayout() {
                         2,
                         minmax(0, 1fr)
                     ) !important;
-
                 gap: 18px !important;
             }
 
@@ -1208,11 +1166,8 @@ function setupProductLayout() {
                         2,
                         minmax(0, 1fr)
                     ) !important;
-
                 gap: 12px !important;
-
                 padding-left: 8px !important;
-
                 padding-right: 8px !important;
             }
 
@@ -1234,26 +1189,20 @@ function setupProductLayout() {
 
             .product-thumbnail {
                 width: 50px !important;
-
                 height: 50px !important;
-
                 min-width: 50px !important;
             }
 
 
             .size-button {
                 min-width: 38px !important;
-
                 height: 36px !important;
             }
         }
-
     `;
 
 
-    document.head.appendChild(
-        style
-    );
+    document.head.appendChild(style);
 }
 
 
@@ -1305,8 +1254,7 @@ async function loadProducts() {
         }
 
 
-        productGrid.innerHTML =
-            "";
+        productGrid.innerHTML = "";
 
 
         if (
@@ -1327,19 +1275,15 @@ async function loadProducts() {
         }
 
 
-        products.forEach(
-            product => {
+        products.forEach(product => {
 
-                const card =
-                    createProductCard(
-                        product
-                    );
+            const card =
+                createProductCard(product);
 
-                productGrid.appendChild(
-                    card
-                );
-            }
-        );
+            productGrid.appendChild(
+                card
+            );
+        });
 
 
     } catch (error) {
@@ -1369,8 +1313,8 @@ async function loadProducts() {
 function setupCartButton() {
 
     const cartButton =
-        document.querySelector(
-            "#cartButton"
+        document.getElementById(
+            "cartButton"
         );
 
 
@@ -1417,7 +1361,7 @@ window.orderOnWhatsApp =
 
 
 /* =====================================================
-   START
+   START WEBSITE
 ===================================================== */
 
 document.addEventListener(
@@ -1427,6 +1371,10 @@ document.addEventListener(
         setupProductLayout();
 
         setupCartButton();
+
+        /*
+           Set initial cart count to 0.
+        */
 
         updateCartCount();
 
