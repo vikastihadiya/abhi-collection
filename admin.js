@@ -5,6 +5,52 @@
 
 
 /* =====================================================
+   HELPER — CONVERT IMAGES TO ARRAY
+===================================================== */
+
+function getImagesArray(images) {
+
+    if (!images) {
+        return [];
+    }
+
+    // Already an array
+    if (Array.isArray(images)) {
+        return images;
+    }
+
+    // Stored as text
+    if (typeof images === "string") {
+
+        try {
+
+            const parsed = JSON.parse(images);
+
+            if (Array.isArray(parsed)) {
+                return parsed;
+            }
+
+            if (typeof parsed === "string") {
+                return [parsed];
+            }
+
+        } catch (error) {
+
+            // If it is simply a URL
+            if (
+                images.startsWith("http://") ||
+                images.startsWith("https://")
+            ) {
+                return [images];
+            }
+        }
+    }
+
+    return [];
+}
+
+
+/* =====================================================
    ADMIN LOGIN
 ===================================================== */
 
@@ -18,106 +64,106 @@ const adminContainer =
     document.querySelector(".admin-container");
 
 
-/* ================= CHECK LOGIN ================= */
-
 async function checkAdminLogin() {
 
     const {
         data: {
             session
         }
-    } =
-        await supabaseClient.auth.getSession();
+    } = await supabaseClient.auth.getSession();
 
 
     if (session) {
 
-        loginSection.style.display =
-            "none";
+        if (loginSection) {
+            loginSection.style.display = "none";
+        }
 
-        adminContainer.style.display =
-            "block";
+        if (adminContainer) {
+            adminContainer.style.display = "block";
+        }
 
     } else {
 
-        loginSection.style.display =
-            "block";
+        if (loginSection) {
+            loginSection.style.display = "block";
+        }
 
-        adminContainer.style.display =
-            "none";
-
+        if (adminContainer) {
+            adminContainer.style.display = "none";
+        }
     }
-
 }
 
 
-/* ================= ADMIN LOGIN ================= */
+/* =====================================================
+   LOGIN
+===================================================== */
 
-loginForm.addEventListener(
-    "submit",
-    async function(event) {
+if (loginForm) {
 
-        event.preventDefault();
+    loginForm.addEventListener(
+        "submit",
+        async function (event) {
 
+            event.preventDefault();
 
-        const email =
-            document
-                .getElementById("adminEmail")
-                .value
-                .trim();
+            const email =
+                document
+                    .getElementById("adminEmail")
+                    .value
+                    .trim();
 
+            const password =
+                document
+                    .getElementById("adminPassword")
+                    .value;
 
-        const password =
-            document
-                .getElementById("adminPassword")
-                .value;
+            const loginMessage =
+                document.getElementById(
+                    "loginMessage"
+                );
 
-
-        const loginMessage =
-            document.getElementById(
-                "loginMessage"
-            );
-
-
-        loginMessage.textContent =
-            "Logging in...";
-
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient.auth
-                .signInWithPassword({
-
-                    email: email,
-
-                    password: password
-
-                });
-
-
-        if (error) {
-
-            console.error(error);
 
             loginMessage.textContent =
-                "Login failed: " +
-                error.message;
+                "Logging in...";
 
-            return;
 
+            const {
+                error
+            } =
+                await supabaseClient.auth
+                    .signInWithPassword({
+
+                        email: email,
+
+                        password: password
+
+                    });
+
+
+            if (error) {
+
+                console.error(error);
+
+                loginMessage.textContent =
+                    "Login failed: " +
+                    error.message;
+
+                return;
+            }
+
+
+            loginMessage.textContent =
+                "Login successful!";
+
+
+            await checkAdminLogin();
+
+            await displayAdminProducts();
         }
-
-
-        loginMessage.textContent =
-            "Login successful!";
-
-
-        checkAdminLogin();
-
-    }
-);
+    );
+}
 
 
 /* =====================================================
@@ -134,16 +180,13 @@ if (forgotPasswordButton) {
 
     forgotPasswordButton.addEventListener(
         "click",
-        async function() {
+        async function () {
 
             const email =
                 document
-                    .getElementById(
-                        "adminEmail"
-                    )
+                    .getElementById("adminEmail")
                     .value
                     .trim();
-
 
             const loginMessage =
                 document.getElementById(
@@ -157,7 +200,6 @@ if (forgotPasswordButton) {
                     "Please enter your admin email first.";
 
                 return;
-
             }
 
 
@@ -187,22 +229,14 @@ if (forgotPasswordButton) {
                     error.message;
 
                 return;
-
             }
 
 
             loginMessage.textContent =
                 "Password reset email sent. Check your email.";
-
         }
     );
-
 }
-
-
-/* ================= INITIAL LOGIN CHECK ================= */
-
-checkAdminLogin();
 
 
 /* =====================================================
@@ -220,90 +254,83 @@ const imagePreview =
     );
 
 
-imageInput.addEventListener(
-    "change",
-    function() {
+if (imageInput) {
 
-        imagePreview.innerHTML =
-            "";
+    imageInput.addEventListener(
+        "change",
+        function () {
 
+            imagePreview.innerHTML = "";
 
-        const files =
-            Array.from(
-                this.files
-            );
+            const files =
+                Array.from(this.files);
 
 
-        if (files.length > 5) {
+            if (files.length > 5) {
 
-            alert(
-                "Please select maximum 5 photos."
-            );
+                alert(
+                    "Please select maximum 5 photos."
+                );
 
-            this.value =
-                "";
+                this.value = "";
 
-            return;
-
-        }
+                return;
+            }
 
 
-        files.forEach(
-            file => {
+            files.forEach(file => {
 
                 const reader =
                     new FileReader();
 
 
                 reader.onload =
-                    function(e) {
+                    function (event) {
 
                         const img =
                             document.createElement(
                                 "img"
                             );
 
-
                         img.src =
-                            e.target.result;
-
+                            event.target.result;
 
                         imagePreview.appendChild(
                             img
                         );
-
                     };
 
 
-                reader.readAsDataURL(
-                    file
-                );
+                reader.readAsDataURL(file);
+            });
 
-            }
-        );
-
-    }
-);
+        }
+    );
+}
 
 
 /* =====================================================
    ADD PRODUCT
 ===================================================== */
 
-document
-    .getElementById("productForm")
-    .addEventListener(
+const productForm =
+    document.getElementById(
+        "productForm"
+    );
+
+
+if (productForm) {
+
+    productForm.addEventListener(
         "submit",
-        async function(event) {
+        async function (event) {
 
             event.preventDefault();
 
 
             const name =
                 document
-                    .getElementById(
-                        "productName"
-                    )
+                    .getElementById("productName")
                     .value
                     .trim();
 
@@ -311,9 +338,7 @@ document
             const price =
                 Number(
                     document
-                        .getElementById(
-                            "productPrice"
-                        )
+                        .getElementById("productPrice")
                         .value
                 );
 
@@ -321,9 +346,7 @@ document
             const mrp =
                 Number(
                     document
-                        .getElementById(
-                            "productMRP"
-                        )
+                        .getElementById("productMRP")
                         .value
                 );
 
@@ -339,28 +362,26 @@ document
 
             const sizes =
                 document
-                    .getElementById(
-                        "productSizes"
-                    )
+                    .getElementById("productSizes")
                     .value
                     .split(",")
                     .map(
-                        size =>
-                            size.trim()
+                        size => size.trim()
                     )
                     .filter(
-                        size =>
-                            size !== ""
+                        size => size !== ""
                     );
 
 
             const files =
-                Array.from(
-                    imageInput.files
-                );
+                imageInput
+                    ? Array.from(
+                        imageInput.files
+                    )
+                    : [];
 
 
-            /* ================= CHECK IMAGES ================= */
+            /* CHECK IMAGES */
 
             if (files.length === 0) {
 
@@ -369,7 +390,6 @@ document
                 );
 
                 return;
-
             }
 
 
@@ -380,11 +400,8 @@ document
                 );
 
                 return;
-
             }
 
-
-            /* ================= SAVE BUTTON ================= */
 
             const saveButton =
                 document.querySelector(
@@ -392,45 +409,48 @@ document
                 );
 
 
-            saveButton.disabled =
-                true;
+            if (saveButton) {
+
+                saveButton.disabled = true;
+
+                saveButton.textContent =
+                    "Uploading...";
+            }
 
 
-            saveButton.textContent =
-                "Uploading...";
+            let product = null;
+
+            const uploadedFilePaths = [];
 
 
             try {
 
-
                 /* =================================================
-                   INSERT PRODUCT
+                   STEP 1 — CREATE PRODUCT
                 ================================================= */
 
                 const {
-                    data: product,
+                    data,
                     error: productError
                 } =
                     await supabaseClient
                         .from("products")
                         .insert([
                             {
+                                name: name,
 
-                                name:
-                                    name,
+                                price: price,
 
-                                price:
-                                    price,
-
-                                mrp:
-                                    mrp,
+                                mrp: mrp,
 
                                 description:
                                     description,
 
+                                // sizes column is TEXT
                                 sizes:
-                                    sizes
-
+                                    JSON.stringify(
+                                        sizes
+                                    )
                             }
                         ])
                         .select()
@@ -438,18 +458,18 @@ document
 
 
                 if (productError) {
-
                     throw productError;
-
                 }
 
 
+                product = data;
+
+
                 /* =================================================
-                   UPLOAD IMAGES
+                   STEP 2 — UPLOAD IMAGES
                 ================================================= */
 
-                const imageUrls =
-                    [];
+                const imageUrls = [];
 
 
                 for (
@@ -462,15 +482,30 @@ document
                         files[i];
 
 
-                    const fileExtension =
-                        file.name
-                            .split(".")
-                            .pop();
+                    /* Get extension safely */
 
+                    const originalName =
+                        file.name || "";
+
+
+                    const extension =
+                        originalName
+                            .split(".")
+                            .pop()
+                            .toLowerCase();
+
+
+                    const safeExtension =
+                        extension || "jpg";
+
+
+                    /* Unique file path */
 
                     const filePath =
-                        `${product.id}/${Date.now()}-${i}.${fileExtension}`;
+                        `${product.id}/${Date.now()}-${i}.${safeExtension}`;
 
+
+                    /* Upload */
 
                     const {
                         error: uploadError
@@ -484,26 +519,31 @@ document
                                 filePath,
                                 file,
                                 {
-
                                     cacheControl:
                                         "3600",
 
                                     upsert:
-                                        false
+                                        false,
 
+                                    contentType:
+                                        file.type ||
+                                        "image/jpeg"
                                 }
                             );
 
 
                     if (uploadError) {
-
                         throw uploadError;
-
                     }
 
 
+                    uploadedFilePaths.push(
+                        filePath
+                    );
+
+
                     /* =================================================
-                       GET PUBLIC URL
+                       STEP 3 — GET PUBLIC URL
                     ================================================= */
 
                     const {
@@ -520,19 +560,25 @@ document
                             );
 
 
+                    if (
+                        !publicUrlData ||
+                        !publicUrlData.publicUrl
+                    ) {
+
+                        throw new Error(
+                            "Could not create image URL."
+                        );
+                    }
+
+
                     imageUrls.push(
                         publicUrlData.publicUrl
                     );
-
                 }
 
 
                 /* =================================================
-                   SAVE IMAGE URLS
-                   
-                   IMPORTANT:
-                   Your database images column is TEXT.
-                   Therefore we save the array as JSON text.
+                   STEP 4 — SAVE IMAGE URLS AS TEXT
                 ================================================= */
 
                 const {
@@ -542,6 +588,8 @@ document
                         .from("products")
                         .update({
 
+                            // IMPORTANT:
+                            // images column is TEXT
                             images:
                                 JSON.stringify(
                                     imageUrls
@@ -555,40 +603,90 @@ document
 
 
                 if (updateError) {
-
                     throw updateError;
-
                 }
 
 
-                /* ================= SUCCESS ================= */
+                /* =================================================
+                   SUCCESS
+                ================================================= */
 
                 alert(
                     "Product saved successfully!"
                 );
 
 
-                /* ================= RESET FORM ================= */
-
-                document
-                    .getElementById(
-                        "productForm"
-                    )
-                    .reset();
+                productForm.reset();
 
 
-                imagePreview.innerHTML =
-                    "";
+                if (imagePreview) {
+                    imagePreview.innerHTML =
+                        "";
+                }
 
 
-                /* ================= RELOAD PRODUCTS ================= */
-
-                displayAdminProducts();
+                await displayAdminProducts();
 
 
             } catch (error) {
 
-                console.error(error);
+                console.error(
+                    "Product save error:",
+                    error
+                );
+
+
+                /* If product was created but image
+                   upload failed, remove product */
+
+                if (product && product.id) {
+
+                    try {
+
+                        await supabaseClient
+                            .from("products")
+                            .delete()
+                            .eq(
+                                "id",
+                                product.id
+                            );
+
+                    } catch (cleanupError) {
+
+                        console.error(
+                            "Cleanup error:",
+                            cleanupError
+                        );
+                    }
+                }
+
+
+                /* Remove any uploaded images */
+
+                if (
+                    uploadedFilePaths.length >
+                    0
+                ) {
+
+                    try {
+
+                        await supabaseClient
+                            .storage
+                            .from(
+                                "product-images"
+                            )
+                            .remove(
+                                uploadedFilePaths
+                            );
+
+                    } catch (cleanupError) {
+
+                        console.error(
+                            "Image cleanup error:",
+                            cleanupError
+                        );
+                    }
+                }
 
 
                 alert(
@@ -598,96 +696,22 @@ document
 
             } finally {
 
-                saveButton.disabled =
-                    false;
+                if (saveButton) {
 
+                    saveButton.disabled =
+                        false;
 
-                saveButton.textContent =
-                    "Save Product";
-
+                    saveButton.textContent =
+                        "Save Product";
+                }
             }
-
         }
     );
-
-
-/* =====================================================
-   CONVERT IMAGES TO ARRAY
-===================================================== */
-
-function getImagesArray(images) {
-
-    /* No images */
-
-    if (!images) {
-
-        return [];
-
-    }
-
-
-    /* Already an array */
-
-    if (Array.isArray(images)) {
-
-        return images;
-
-    }
-
-
-    /* Text stored in database */
-
-    if (typeof images === "string") {
-
-        try {
-
-            const parsed =
-                JSON.parse(images);
-
-
-            if (
-                Array.isArray(parsed)
-            ) {
-
-                return parsed;
-
-            }
-
-
-        } catch (error) {
-
-            /*
-               If the database contains
-               one direct URL instead of JSON.
-            */
-
-            if (
-                images.startsWith(
-                    "http://"
-                ) ||
-                images.startsWith(
-                    "https://"
-                )
-            ) {
-
-                return [
-                    images
-                ];
-
-            }
-
-        }
-
-    }
-
-
-    return [];
-
 }
 
 
 /* =====================================================
-   DISPLAY PRODUCTS
+   DISPLAY ADMIN PRODUCTS
 ===================================================== */
 
 async function displayAdminProducts() {
@@ -696,6 +720,11 @@ async function displayAdminProducts() {
         document.getElementById(
             "adminProducts"
         );
+
+
+    if (!container) {
+        return;
+    }
 
 
     container.innerHTML =
@@ -725,12 +754,10 @@ async function displayAdminProducts() {
             "<p>Unable to load products.</p>";
 
         return;
-
     }
 
 
-    container.innerHTML =
-        "";
+    container.innerHTML = "";
 
 
     if (
@@ -742,7 +769,6 @@ async function displayAdminProducts() {
             "<p>No products added yet.</p>";
 
         return;
-
     }
 
 
@@ -759,17 +785,18 @@ async function displayAdminProducts() {
                 "admin-product";
 
 
-            /* ================= GET IMAGE ================= */
+            /* IMPORTANT:
+               Convert TEXT/JSON into array */
 
-            const productImages =
+            const images =
                 getImagesArray(
                     product.images
                 );
 
 
             const firstImage =
-                productImages.length > 0
-                    ? productImages[0]
+                images.length > 0
+                    ? images[0]
                     : "";
 
 
@@ -780,49 +807,42 @@ async function displayAdminProducts() {
                         ? `
                             <img
                                 src="${firstImage}"
-                                alt="${product.name || "Product"}"
+                                alt="${product.name}"
                             >
                         `
                         : `
-                            <div class="no-image">
-                                No Image
+                            <div>
+                                No image
                             </div>
                         `
                 }
 
-
                 <div class="admin-product-info">
 
                     <h3>
-                        ${product.name || ""}
+                        ${product.name}
                     </h3>
 
-
                     <p>
-                        ₹${product.price || 0}
+                        ₹${product.price}
                     </p>
-
 
                     <button
                         class="delete-button"
-                        onclick="deleteProduct(${product.id})">
-
+                        onclick="deleteProduct(${product.id})"
+                    >
                         Delete
-
                     </button>
 
                 </div>
-
             `;
 
 
             container.appendChild(
                 div
             );
-
         }
     );
-
 }
 
 
@@ -841,14 +861,11 @@ async function deleteProduct(
 
 
     if (!confirmDelete) {
-
         return;
-
     }
 
 
     try {
-
 
         /* =================================================
            GET PRODUCT
@@ -869,105 +886,105 @@ async function deleteProduct(
 
 
         if (fetchError) {
-
             throw fetchError;
-
         }
 
 
         /* =================================================
-           CONVERT IMAGES TO ARRAY
-           
-           This fixes:
-           "product.images.map is not a function"
+           CONVERT IMAGE TEXT TO ARRAY
         ================================================= */
 
-        const productImages =
+        const images =
             getImagesArray(
                 product.images
             );
 
 
         /* =================================================
-           DELETE IMAGES FROM STORAGE
+           GET STORAGE PATHS
         ================================================= */
 
-        if (
-            productImages.length > 0
-        ) {
+        const filePaths =
+            images
+                .map(url => {
 
-            const filePaths =
-                productImages
-                    .map(
-                        url => {
-
-                            const marker =
-                                "/product-images/";
-
-
-                            const position =
-                                url.indexOf(
-                                    marker
-                                );
+                    if (
+                        typeof url !==
+                        "string"
+                    ) {
+                        return null;
+                    }
 
 
-                            if (
-                                position === -1
-                            ) {
-
-                                return null;
-
-                            }
+                    const marker =
+                        "/product-images/";
 
 
-                            return url.substring(
-                                position +
-                                marker.length
-                            );
-
-                        }
-                    )
-                    .filter(
-                        Boolean
-                    );
-
-
-            if (
-                filePaths.length > 0
-            ) {
-
-                const {
-                    error:
-                        storageError
-                } =
-                    await supabaseClient
-                        .storage
-                        .from(
-                            "product-images"
-                        )
-                        .remove(
-                            filePaths
+                    const position =
+                        url.indexOf(
+                            marker
                         );
 
 
-                if (storageError) {
+                    if (
+                        position === -1
+                    ) {
+                        return null;
+                    }
 
-                    throw storageError;
 
-                }
+                    return url.substring(
+                        position +
+                        marker.length
+                    );
 
+                })
+                .filter(
+                    Boolean
+                );
+
+
+        /* =================================================
+           DELETE STORAGE IMAGES
+        ================================================= */
+
+        if (
+            filePaths.length > 0
+        ) {
+
+            const {
+                error:
+                    storageError
+            } =
+                await supabaseClient
+                    .storage
+                    .from(
+                        "product-images"
+                    )
+                    .remove(
+                        filePaths
+                    );
+
+
+            if (storageError) {
+
+                console.error(
+                    "Storage delete error:",
+                    storageError
+                );
+
+                // Continue deleting product
+                // even if image cleanup fails.
             }
-
         }
 
 
         /* =================================================
-           DELETE PRODUCT FROM DATABASE
+           DELETE DATABASE PRODUCT
         ================================================= */
 
         const {
-            error:
-                deleteError
+            error: deleteError
         } =
             await supabaseClient
                 .from("products")
@@ -979,40 +996,45 @@ async function deleteProduct(
 
 
         if (deleteError) {
-
             throw deleteError;
-
         }
 
-
-        /* ================= SUCCESS ================= */
 
         alert(
             "Product deleted successfully!"
         );
 
 
-        /* ================= REFRESH PRODUCT LIST ================= */
-
-        displayAdminProducts();
+        await displayAdminProducts();
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Delete error:",
+            error
+        );
 
 
         alert(
             "Unable to delete product:\n" +
             error.message
         );
-
     }
-
 }
+
+
+/* =====================================================
+   MAKE DELETE FUNCTION AVAILABLE
+===================================================== */
+
+window.deleteProduct =
+    deleteProduct;
 
 
 /* =====================================================
    INITIALIZE
 ===================================================== */
+
+checkAdminLogin();
 
 displayAdminProducts();
