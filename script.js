@@ -1,11 +1,23 @@
-/* =========================================================
-   ABHI COLLECTION - MAIN SCRIPT
-   ========================================================= */
+/* =====================================================
+   ABHI COLLECTION
+   PUBLIC WEBSITE — SUPABASE + PRODUCT GALLERY
+===================================================== */
 
 
-/* =========================================================
-   1. SUPABASE PRODUCT IMAGE HELPER
-   ========================================================= */
+/* =====================================================
+   CART
+===================================================== */
+
+let cart = [];
+
+
+/* =====================================================
+   IMAGE DATA HELPER
+   Supports:
+   - Array
+   - JSON text array
+   - Single URL
+===================================================== */
 
 function getImagesArray(images) {
 
@@ -13,10 +25,12 @@ function getImagesArray(images) {
         return [];
     }
 
+    /* Already an array */
     if (Array.isArray(images)) {
-        return images;
+        return images.filter(Boolean);
     }
 
+    /* Text stored in Supabase */
     if (typeof images === "string") {
 
         try {
@@ -24,7 +38,7 @@ function getImagesArray(images) {
             const parsed = JSON.parse(images);
 
             if (Array.isArray(parsed)) {
-                return parsed;
+                return parsed.filter(Boolean);
             }
 
             if (typeof parsed === "string") {
@@ -33,13 +47,13 @@ function getImagesArray(images) {
 
         } catch (error) {
 
+            /* If it is simply a URL */
             if (
                 images.startsWith("http://") ||
                 images.startsWith("https://")
             ) {
                 return [images];
             }
-
         }
     }
 
@@ -47,9 +61,9 @@ function getImagesArray(images) {
 }
 
 
-/* =========================================================
-   2. PRODUCT SIZE HELPER
-   ========================================================= */
+/* =====================================================
+   SIZE DATA HELPER
+===================================================== */
 
 function getSizesArray(sizes) {
 
@@ -71,19 +85,12 @@ function getSizesArray(sizes) {
                 return parsed;
             }
 
-            if (typeof parsed === "string") {
-                return [parsed];
-            }
-
         } catch (error) {
 
             return sizes
                 .split(",")
-                .map(function (size) {
-                    return size.trim();
-                })
+                .map(size => size.trim())
                 .filter(Boolean);
-
         }
     }
 
@@ -91,451 +98,46 @@ function getSizesArray(sizes) {
 }
 
 
-/* =========================================================
-   3. CART
-   ========================================================= */
-
-let cart = [];
-
-
-/* =========================================================
-   4. FORCE PRODUCT SIZE
-   ========================================================= */
-
-function setupProductLayout() {
-
-    const style = document.createElement("style");
-
-    style.innerHTML = `
-
-        /* PRODUCT GRID */
-
-        .product-grid {
-            display: grid !important;
-            grid-template-columns: repeat(
-                auto-fill,
-                minmax(220px, 1fr)
-            ) !important;
-
-            gap: 24px !important;
-
-            width: 100% !important;
-            max-width: 1200px !important;
-
-            margin-left: auto !important;
-            margin-right: auto !important;
-        }
-
-
-        /* PRODUCT CARD */
-
-        .product-card {
-            width: 100% !important;
-            max-width: 280px !important;
-
-            margin-left: auto !important;
-            margin-right: auto !important;
-
-            overflow: hidden !important;
-
-            box-sizing: border-box !important;
-        }
-
-
-        /* PRODUCT IMAGE BOX */
-
-        .product-image {
-            width: 100% !important;
-
-            height: 280px !important;
-
-            overflow: hidden !important;
-
-            position: relative !important;
-
-            background: #f7f7f7 !important;
-
-            display: flex !important;
-
-            align-items: center !important;
-
-            justify-content: center !important;
-        }
-
-
-        /* PRODUCT IMAGE */
-
-        .product-image img {
-
-            width: 100% !important;
-
-            height: 280px !important;
-
-            max-width: 100% !important;
-
-            object-fit: contain !important;
-
-            display: block !important;
-        }
-
-
-        /* PRODUCT INFORMATION */
-
-        .product-info {
-            padding: 14px !important;
-        }
-
-
-        /* TABLET */
-
-        @media (max-width: 900px) {
-
-            .product-grid {
-
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr))
-                !important;
-
-                gap: 18px !important;
-            }
-
-            .product-card {
-                max-width: 100% !important;
-            }
-
-            .product-image {
-                height: 260px !important;
-            }
-
-            .product-image img {
-                height: 260px !important;
-            }
-        }
-
-
-        /* MOBILE */
-
-        @media (max-width: 600px) {
-
-            .product-grid {
-
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr))
-                !important;
-
-                gap: 10px !important;
-            }
-
-            .product-image {
-
-                height: 220px !important;
-            }
-
-            .product-image img {
-
-                height: 220px !important;
-            }
-
-            .product-info {
-
-                padding: 10px !important;
-            }
-        }
-
-    `;
-
-    document.head.appendChild(style);
-}
-
-
-/* =========================================================
-   5. LOAD PRODUCTS FROM SUPABASE
-   ========================================================= */
-
-async function loadProducts() {
-
-    const productGrid =
-        document.querySelector(".product-grid");
-
-    if (!productGrid) {
-        return;
-    }
-
-    productGrid.innerHTML =
-        "<p>Loading products...</p>";
-
-
-    try {
-
-        const {
-            data: products,
-            error
-        } = await supabaseClient
-            .from("products")
-            .select("*")
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
-
-
-        if (error) {
-            throw error;
-        }
-
-
-        productGrid.innerHTML = "";
-
-
-        if (
-            !products ||
-            products.length === 0
-        ) {
-
-            productGrid.innerHTML = `
-                <div class="no-products">
-                    <h3>Collection Coming Soon</h3>
-                    <p>New products will be added soon.</p>
-                </div>
-            `;
-
-            return;
-        }
-
-
-        products.forEach(function (product) {
-
-            createProductCard(
-                productGrid,
-                product
-            );
-
-        });
-
-
-        updateCartCount();
-
-    } catch (error) {
-
-        console.error(
-            "Product loading error:",
-            error
-        );
-
-        productGrid.innerHTML = `
-            <div class="no-products">
-                <h3>Unable to load products</h3>
-                <p>Please refresh the page.</p>
-            </div>
-        `;
-    }
-}
-
-
-/* =========================================================
-   6. CREATE PRODUCT CARD
-   ========================================================= */
-
-function createProductCard(
-    productGrid,
-    product
-) {
-
-    const article =
-        document.createElement("article");
-
-
-    article.className =
-        "product-card";
-
-
-    article.setAttribute(
-        "data-product-id",
-        product.id
-    );
-
-
-    const images =
-        getImagesArray(product.images);
-
-
-    const image =
-        images.length > 0
-            ? images[0]
-            : "";
-
-
-    const sizes =
-        getSizesArray(product.sizes);
-
-
-    let sizeText = "";
-
-
-    if (sizes.length > 0) {
-
-        sizeText =
-            `<p class="product-sizes">
-                Sizes: ${sizes.join(", ")}
-            </p>`;
-
-    }
-
-
-    const price =
-        Number(product.price) || 0;
-
-
-    const mrp =
-        Number(product.mrp) || 0;
-
-
-    let imageHTML = "";
-
-
-    if (image) {
-
-        imageHTML = `
-            <img
-                src="${image}"
-                alt="${product.name || "Product"}"
-                loading="lazy"
-            >
-        `;
-
-    } else {
-
-        imageHTML = `
-            <div class="no-product-image">
-                No Image
-            </div>
-        `;
-
-    }
-
-
-    article.innerHTML = `
-
-        <div class="product-image">
-
-            <span class="sale-tag">
-                NEW
-            </span>
-
-            ${imageHTML}
-
-        </div>
-
-
-        <div class="product-info">
-
-            <h3>
-                ${product.name || "Product"}
-            </h3>
-
-
-            ${
-                product.description
-                    ? `<p class="product-description">
-                        ${product.description}
-                       </p>`
-                    : ""
-            }
-
-
-            ${sizeText}
-
-
-            <div class="price-area">
-
-                <strong>
-                    ₹${price}
-                </strong>
-
-                ${
-                    mrp > price
-                        ? `<del>
-                            ₹${mrp}
-                           </del>`
-                        : ""
-                }
-
-            </div>
-
-
-            <button
-                class="add-cart"
-                type="button"
-                onclick="addToCart(
-                    '${String(
-                        product.name || "Product"
-                    ).replace(/'/g, "\\'")}',
-                    ${price}
-                )"
-            >
-                Add to Cart
-            </button>
-
-        </div>
-
-    `;
-
-
-    productGrid.appendChild(article);
-}
-
-
-/* =========================================================
-   7. ADD TO CART
-   ========================================================= */
-
-function addToCart(
-    productName,
-    price
-) {
-
-    cart.push({
-        name: productName,
-        price: price
-    });
-
-
-    updateCartCount();
-
-
-    alert(
-        productName +
-        " added to cart!"
-    );
-}
-
-
-/* =========================================================
-   8. UPDATE CART COUNT
-   ========================================================= */
+/* =====================================================
+   UPDATE CART COUNT
+===================================================== */
 
 function updateCartCount() {
 
     const cartCount =
-        document.querySelector(
-            ".cart-count"
-        );
+        document.getElementById("cart-count");
 
-
-    if (cartCount) {
-
-        cartCount.textContent =
-            cart.length;
-
+    if (!cartCount) {
+        return;
     }
+
+    cartCount.textContent = cart.length;
 }
 
 
-/* =========================================================
-   9. SHOW CART
-   ========================================================= */
+/* =====================================================
+   ADD TO CART
+===================================================== */
+
+function addToCart(productName, price) {
+
+    cart.push({
+        name: productName,
+        price: Number(price)
+    });
+
+    updateCartCount();
+
+    alert(
+        productName +
+        " has been added to your cart."
+    );
+}
+
+
+/* =====================================================
+   SHOW CART
+===================================================== */
 
 function showCart() {
 
@@ -548,80 +150,59 @@ function showCart() {
         return;
     }
 
-
     let message =
-        "Your Cart:\n\n";
-
+        "Your Abhi Collection Cart\n\n";
 
     let total = 0;
 
-
-    cart.forEach(function (item, index) {
+    cart.forEach((item, index) => {
 
         message +=
-            `${index + 1}. ${item.name} - ₹${item.price}\n`;
+            (index + 1) +
+            ". " +
+            item.name +
+            " - ₹" +
+            item.price +
+            "\n";
 
-        total +=
-            Number(item.price);
-
+        total += Number(item.price);
     });
 
+    message +=
+        "\nTotal: ₹" +
+        total;
 
     message +=
-        `\nTotal: ₹${total}`;
-
+        "\n\nTo order, contact us on WhatsApp.";
 
     alert(message);
 }
 
 
-/* =========================================================
-   10. WHATSAPP ORDER
-   ========================================================= */
+/* =====================================================
+   WHATSAPP ORDER
+===================================================== */
 
-function orderOnWhatsApp(
-    phoneNumber
-) {
+function orderOnWhatsApp(productName, price) {
 
-    if (cart.length === 0) {
+    const phoneNumbers = [
+        "7088443473",
+        "8958123749"
+    ];
 
-        alert(
-            "Your cart is empty."
-        );
-
-        return;
-    }
-
-
-    let message =
-        "Hello Abhi Collection,%0A%0A";
-
-
-    message +=
-        "I want to order:%0A";
-
-
-    let total = 0;
-
-
-    cart.forEach(function (item, index) {
-
-        message +=
-            `${index + 1}. ${item.name} - ₹${item.price}%0A`;
-
-        total +=
-            Number(item.price);
-
-    });
-
-
-    message +=
-        `%0ATotal: ₹${total}`;
-
+    const message =
+        "Hello Abhi Collection,%0A%0A" +
+        "I want to order:%0A" +
+        productName +
+        "%0APrice: ₹" +
+        price +
+        "%0A%0APlease share availability and order details.";
 
     const whatsappURL =
-        `https://wa.me/91${phoneNumber}?text=${message}`;
-
+        "https://wa.me/" +
+        phoneNumbers[0] +
+        "?text=" +
+        message;
 
     window.open(
         whatsappURL,
@@ -630,53 +211,1003 @@ function orderOnWhatsApp(
 }
 
 
-/* =========================================================
-   11. CART BUTTON
-   ========================================================= */
+/* =====================================================
+   PRODUCT GALLERY
+===================================================== */
 
-document.addEventListener(
-    "click",
-    function (event) {
+function createProductGallery(images, productName) {
 
-        const button =
-            event.target.closest(
-                ".cart-button, #cartButton, #cart-btn"
-            );
+    const gallery =
+        document.createElement("div");
+
+    gallery.className =
+        "product-gallery";
 
 
-        if (button) {
+    /* =================================================
+       MAIN IMAGE
+    ================================================= */
 
-            showCart();
+    const mainImageContainer =
+        document.createElement("div");
 
-        }
+    mainImageContainer.className =
+        "product-main-image";
 
+
+    const mainImage =
+        document.createElement("img");
+
+    mainImage.className =
+        "main-product-image";
+
+    mainImage.alt =
+        productName;
+
+
+    if (images.length > 0) {
+
+        mainImage.src =
+            images[0];
+
+    } else {
+
+        mainImage.style.display =
+            "none";
+
+        const noImage =
+            document.createElement("div");
+
+        noImage.className =
+            "no-product-image";
+
+        noImage.textContent =
+            "Product Image";
+
+        mainImageContainer.appendChild(
+            noImage
+        );
     }
-);
 
 
-/* =========================================================
-   12. INITIALIZE WEBSITE
-   ========================================================= */
+    mainImageContainer.appendChild(
+        mainImage
+    );
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+    gallery.appendChild(
+        mainImageContainer
+    );
 
-        setupProductLayout();
 
-        loadProducts();
+    /* =================================================
+       THUMBNAILS
+    ================================================= */
 
-        console.log(
-            "ABHI COLLECTION WEBSITE LOADED"
+    if (images.length > 1) {
+
+        const thumbnails =
+            document.createElement("div");
+
+        thumbnails.className =
+            "product-thumbnails";
+
+
+        images.forEach(
+            (imageURL, index) => {
+
+                const thumbnailButton =
+                    document.createElement("button");
+
+                thumbnailButton.type =
+                    "button";
+
+                thumbnailButton.className =
+                    "product-thumbnail";
+
+
+                if (index === 0) {
+
+                    thumbnailButton.classList.add(
+                        "active"
+                    );
+                }
+
+
+                const thumbnailImage =
+                    document.createElement("img");
+
+                thumbnailImage.src =
+                    imageURL;
+
+                thumbnailImage.alt =
+                    productName +
+                    " photo " +
+                    (index + 1);
+
+
+                thumbnailButton.appendChild(
+                    thumbnailImage
+                );
+
+
+                /* ===============================
+                   CHANGE MAIN IMAGE
+                =============================== */
+
+                thumbnailButton.addEventListener(
+                    "click",
+                    function () {
+
+                        mainImage.src =
+                            imageURL;
+
+
+                        document
+                            .querySelectorAll(
+                                ".product-thumbnail"
+                            )
+                            .forEach(
+                                button => {
+
+                                    button.classList.remove(
+                                        "active"
+                                    );
+                                }
+                            );
+
+
+                        thumbnailButton.classList.add(
+                            "active"
+                        );
+                    }
+                );
+
+
+                thumbnails.appendChild(
+                    thumbnailButton
+                );
+            }
         );
 
+
+        gallery.appendChild(
+            thumbnails
+        );
     }
-);
 
 
-/* =========================================================
-   13. MAKE FUNCTIONS AVAILABLE TO HTML
-   ========================================================= */
+    return gallery;
+}
+
+
+/* =====================================================
+   CREATE PRODUCT CARD
+===================================================== */
+
+function createProductCard(product) {
+
+    const card =
+        document.createElement("article");
+
+    card.className =
+        "product-card";
+
+
+    /* =================================================
+       PRODUCT IMAGES
+    ================================================= */
+
+    const images =
+        getImagesArray(
+            product.images
+        );
+
+
+    /* =================================================
+       GALLERY
+    ================================================= */
+
+    const gallery =
+        createProductGallery(
+            images,
+            product.name || "Product"
+        );
+
+
+    card.appendChild(
+        gallery
+    );
+
+
+    /* =================================================
+       PRODUCT INFO
+    ================================================= */
+
+    const productInfo =
+        document.createElement("div");
+
+    productInfo.className =
+        "product-info";
+
+
+    /* =================================================
+       PRODUCT NAME
+    ================================================= */
+
+    const title =
+        document.createElement("h3");
+
+    title.textContent =
+        product.name ||
+        "Product";
+
+
+    productInfo.appendChild(
+        title
+    );
+
+
+    /* =================================================
+       PRICE AREA
+    ================================================= */
+
+    const priceRow =
+        document.createElement("div");
+
+    priceRow.className =
+        "product-price-row";
+
+
+    const price =
+        document.createElement("strong");
+
+    price.textContent =
+        "₹" +
+        Number(product.price || 0);
+
+
+    priceRow.appendChild(
+        price
+    );
+
+
+    /* MRP */
+
+    if (
+        product.mrp &&
+        Number(product.mrp) >
+        Number(product.price)
+    ) {
+
+        const mrp =
+            document.createElement("del");
+
+        mrp.textContent =
+            "₹" +
+            Number(product.mrp);
+
+
+        priceRow.appendChild(
+            mrp
+        );
+    }
+
+
+    productInfo.appendChild(
+        priceRow
+    );
+
+
+    /* =================================================
+       DESCRIPTION
+    ================================================= */
+
+    if (product.description) {
+
+        const description =
+            document.createElement("p");
+
+        description.className =
+            "product-description";
+
+        description.textContent =
+            product.description;
+
+
+        productInfo.appendChild(
+            description
+        );
+    }
+
+
+    /* =================================================
+       SIZES
+    ================================================= */
+
+    const sizes =
+        getSizesArray(
+            product.sizes
+        );
+
+
+    if (sizes.length > 0) {
+
+        const sizeText =
+            document.createElement("p");
+
+        sizeText.className =
+            "product-sizes";
+
+
+        const sizeLabel =
+            document.createElement("strong");
+
+        sizeLabel.textContent =
+            "Sizes: ";
+
+
+        sizeText.appendChild(
+            sizeLabel
+        );
+
+
+        sizeText.appendChild(
+            document.createTextNode(
+                sizes.join(", ")
+            )
+        );
+
+
+        productInfo.appendChild(
+            sizeText
+        );
+    }
+
+
+    /* =================================================
+       BUTTON AREA
+    ================================================= */
+
+    const buttonArea =
+        document.createElement("div");
+
+    buttonArea.className =
+        "product-buttons";
+
+
+    /* ADD TO CART */
+
+    const cartButton =
+        document.createElement("button");
+
+    cartButton.type =
+        "button";
+
+    cartButton.className =
+        "add-cart";
+
+    cartButton.textContent =
+        "Add to Cart";
+
+
+    cartButton.addEventListener(
+        "click",
+        function () {
+
+            addToCart(
+                product.name,
+                product.price
+            );
+        }
+    );
+
+
+    buttonArea.appendChild(
+        cartButton
+    );
+
+
+    /* =================================================
+       WHATSAPP BUTTON
+    ================================================= */
+
+    const whatsappButton =
+        document.createElement("button");
+
+    whatsappButton.type =
+        "button";
+
+    whatsappButton.className =
+        "whatsapp-order";
+
+    whatsappButton.textContent =
+        "Order on WhatsApp";
+
+
+    whatsappButton.addEventListener(
+        "click",
+        function () {
+
+            orderOnWhatsApp(
+                product.name,
+                product.price
+            );
+        }
+    );
+
+
+    buttonArea.appendChild(
+        whatsappButton
+    );
+
+
+    productInfo.appendChild(
+        buttonArea
+    );
+
+
+    /* =================================================
+       FINISH CARD
+    ================================================= */
+
+    card.appendChild(
+        productInfo
+    );
+
+
+    return card;
+}
+
+
+/* =====================================================
+   PRODUCT PAGE STYLING
+===================================================== */
+
+function setupProductLayout() {
+
+    const style =
+        document.createElement("style");
+
+    style.textContent = `
+
+        /* ==========================================
+           PRODUCT GRID
+        ========================================== */
+
+        .product-grid {
+            display: grid !important;
+            grid-template-columns:
+                repeat(
+                    auto-fill,
+                    minmax(220px, 1fr)
+                ) !important;
+
+            gap: 24px !important;
+
+            max-width: 1200px !important;
+
+            margin-left: auto !important;
+            margin-right: auto !important;
+
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+        }
+
+
+        /* ==========================================
+           PRODUCT CARD
+        ========================================== */
+
+        .product-card {
+            width: 100% !important;
+
+            max-width: 280px !important;
+
+            margin-left: auto !important;
+            margin-right: auto !important;
+
+            overflow: hidden !important;
+
+            box-sizing: border-box !important;
+        }
+
+
+        /* ==========================================
+           PRODUCT GALLERY
+        ========================================== */
+
+        .product-gallery {
+            width: 100% !important;
+
+            box-sizing: border-box !important;
+        }
+
+
+        /* ==========================================
+           MAIN IMAGE AREA
+        ========================================== */
+
+        .product-main-image {
+            width: 100% !important;
+
+            height: 280px !important;
+
+            display: flex !important;
+
+            align-items: center !important;
+
+            justify-content: center !important;
+
+            overflow: hidden !important;
+
+            background: #f7f7f7 !important;
+
+            border-radius: 10px !important;
+
+            box-sizing: border-box !important;
+        }
+
+
+        /* ==========================================
+           MAIN IMAGE
+        ========================================== */
+
+        .main-product-image {
+            width: 100% !important;
+
+            height: 280px !important;
+
+            max-width: 100% !important;
+
+            object-fit: contain !important;
+
+            display: block !important;
+
+            margin: 0 !important;
+        }
+
+
+        /* ==========================================
+           THUMBNAILS
+        ========================================== */
+
+        .product-thumbnails {
+            display: flex !important;
+
+            gap: 8px !important;
+
+            margin-top: 10px !important;
+
+            overflow-x: auto !important;
+
+            padding-bottom: 4px !important;
+
+            width: 100% !important;
+
+            box-sizing: border-box !important;
+        }
+
+
+        /* ==========================================
+           THUMBNAIL BUTTON
+        ========================================== */
+
+        .product-thumbnail {
+            width: 58px !important;
+
+            height: 58px !important;
+
+            min-width: 58px !important;
+
+            padding: 2px !important;
+
+            border: 1px solid #ddd !important;
+
+            background: white !important;
+
+            border-radius: 7px !important;
+
+            cursor: pointer !important;
+
+            overflow: hidden !important;
+
+            box-sizing: border-box !important;
+        }
+
+
+        /* ==========================================
+           ACTIVE THUMBNAIL
+        ========================================== */
+
+        .product-thumbnail.active {
+            border: 2px solid #111 !important;
+        }
+
+
+        /* ==========================================
+           THUMBNAIL IMAGE
+        ========================================== */
+
+        .product-thumbnail img {
+            width: 100% !important;
+
+            height: 100% !important;
+
+            object-fit: cover !important;
+
+            display: block !important;
+        }
+
+
+        /* ==========================================
+           NO IMAGE
+        ========================================== */
+
+        .no-product-image {
+            display: flex !important;
+
+            align-items: center !important;
+
+            justify-content: center !important;
+
+            width: 100% !important;
+
+            height: 100% !important;
+
+            color: #777 !important;
+
+            font-size: 14px !important;
+        }
+
+
+        /* ==========================================
+           PRODUCT INFO
+        ========================================== */
+
+        .product-info {
+            padding-top: 12px !important;
+        }
+
+
+        .product-info h3 {
+            margin-top: 0 !important;
+        }
+
+
+        /* ==========================================
+           PRICE
+        ========================================== */
+
+        .product-price-row {
+            display: flex !important;
+
+            align-items: center !important;
+
+            gap: 8px !important;
+
+            margin: 6px 0 !important;
+        }
+
+
+        .product-price-row strong {
+            font-size: 18px !important;
+        }
+
+
+        .product-price-row del {
+            color: #777 !important;
+
+            font-size: 14px !important;
+        }
+
+
+        /* ==========================================
+           DESCRIPTION
+        ========================================== */
+
+        .product-description {
+            font-size: 14px !important;
+
+            line-height: 1.5 !important;
+        }
+
+
+        /* ==========================================
+           SIZES
+        ========================================== */
+
+        .product-sizes {
+            font-size: 14px !important;
+        }
+
+
+        /* ==========================================
+           BUTTONS
+        ========================================== */
+
+        .product-buttons {
+            display: flex !important;
+
+            flex-direction: column !important;
+
+            gap: 8px !important;
+
+            margin-top: 10px !important;
+        }
+
+
+        .product-buttons button {
+            width: 100% !important;
+
+            box-sizing: border-box !important;
+
+            cursor: pointer !important;
+        }
+
+
+        .add-cart {
+            padding: 10px 14px !important;
+        }
+
+
+        .whatsapp-order {
+            padding: 10px 14px !important;
+
+            border: 1px solid #111 !important;
+
+            background: white !important;
+
+            color: #111 !important;
+
+            border-radius: 6px !important;
+        }
+
+
+        /* ==========================================
+           TABLET
+        ========================================== */
+
+        @media (max-width: 768px) {
+
+            .product-grid {
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(0, 1fr)
+                    ) !important;
+
+                gap: 18px !important;
+            }
+
+
+            .product-card {
+                max-width: 260px !important;
+            }
+
+
+            .product-main-image {
+                height: 260px !important;
+            }
+
+
+            .main-product-image {
+                height: 260px !important;
+            }
+        }
+
+
+        /* ==========================================
+           MOBILE
+        ========================================== */
+
+        @media (max-width: 520px) {
+
+            .product-grid {
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(0, 1fr)
+                    ) !important;
+
+                gap: 12px !important;
+
+                padding-left: 8px !important;
+                padding-right: 8px !important;
+            }
+
+
+            .product-card {
+                max-width: 100% !important;
+            }
+
+
+            .product-main-image {
+                height: 220px !important;
+            }
+
+
+            .main-product-image {
+                height: 220px !important;
+            }
+
+
+            .product-thumbnail {
+                width: 50px !important;
+
+                height: 50px !important;
+
+                min-width: 50px !important;
+            }
+        }
+
+    `;
+
+    document.head.appendChild(style);
+}
+
+
+/* =====================================================
+   LOAD PRODUCTS FROM SUPABASE
+===================================================== */
+
+async function loadProducts() {
+
+    const productGrid =
+        document.querySelector(
+            ".product-grid"
+        );
+
+
+    if (!productGrid) {
+
+        console.error(
+            "Product grid not found."
+        );
+
+        return;
+    }
+
+
+    productGrid.innerHTML =
+        "<p>Loading products...</p>";
+
+
+    try {
+
+        const {
+            data: products,
+            error
+        } =
+            await supabaseClient
+                .from("products")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
+
+
+        if (error) {
+
+            throw error;
+        }
+
+
+        productGrid.innerHTML =
+            "";
+
+
+        /* ==========================================
+           NO PRODUCTS
+        ========================================== */
+
+        if (
+            !products ||
+            products.length === 0
+        ) {
+
+            productGrid.innerHTML = `
+                <div class="empty-products">
+                    <h3>Collection Coming Soon</h3>
+                    <p>
+                        New products will appear here soon.
+                    </p>
+                </div>
+            `;
+
+            return;
+        }
+
+
+        /* ==========================================
+           DISPLAY PRODUCTS
+        ========================================== */
+
+        products.forEach(
+            product => {
+
+                const card =
+                    createProductCard(
+                        product
+                    );
+
+                productGrid.appendChild(
+                    card
+                );
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Product loading error:",
+            error
+        );
+
+
+        productGrid.innerHTML = `
+            <div class="empty-products">
+                <h3>Unable to load products</h3>
+                <p>
+                    Please refresh the page and try again.
+                </p>
+            </div>
+        `;
+    }
+}
+
+
+/* =====================================================
+   CART BUTTON
+===================================================== */
+
+function setupCartButton() {
+
+    const cartButton =
+        document.querySelector(
+            "#cartButton"
+        );
+
+
+    if (cartButton) {
+
+        cartButton.addEventListener(
+            "click",
+            showCart
+        );
+    }
+
+
+    /*
+       Also support a button
+       with class .cart-button
+    */
+
+    const alternativeCartButton =
+        document.querySelector(
+            ".cart-button"
+        );
+
+
+    if (
+        alternativeCartButton &&
+        alternativeCartButton !== cartButton
+    ) {
+
+        alternativeCartButton.addEventListener(
+            "click",
+            showCart
+        );
+    }
+}
+
+
+/* =====================================================
+   MAKE FUNCTIONS AVAILABLE
+===================================================== */
 
 window.addToCart =
     addToCart;
@@ -684,8 +1215,24 @@ window.addToCart =
 window.showCart =
     showCart;
 
-window.updateCartCount =
-    updateCartCount;
-
 window.orderOnWhatsApp =
     orderOnWhatsApp;
+
+
+/* =====================================================
+   START WEBSITE
+===================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        setupProductLayout();
+
+        setupCartButton();
+
+        updateCartCount();
+
+        loadProducts();
+    }
+);
