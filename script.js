@@ -1,19 +1,11 @@
-/* =====================================================
-   ABHI COLLECTION
-   PUBLIC WEBSITE — SUPABASE
-===================================================== */
+/* =========================================================
+   ABHI COLLECTION - MAIN SCRIPT
+   ========================================================= */
 
 
-/* =====================================================
-   CART
-===================================================== */
-
-let cart = [];
-
-
-/* =====================================================
-   IMAGE HELPER
-===================================================== */
+/* =========================================================
+   1. SUPABASE PRODUCT IMAGE HELPER
+   ========================================================= */
 
 function getImagesArray(images) {
 
@@ -21,61 +13,43 @@ function getImagesArray(images) {
         return [];
     }
 
-
-    /* Already an array */
-
     if (Array.isArray(images)) {
         return images;
     }
-
-
-    /* TEXT */
 
     if (typeof images === "string") {
 
         try {
 
-            const parsed =
-                JSON.parse(images);
-
+            const parsed = JSON.parse(images);
 
             if (Array.isArray(parsed)) {
                 return parsed;
             }
 
-
-            if (
-                typeof parsed ===
-                "string"
-            ) {
+            if (typeof parsed === "string") {
                 return [parsed];
             }
 
         } catch (error) {
 
-            /* Direct URL */
-
             if (
-                images.startsWith(
-                    "http://"
-                ) ||
-                images.startsWith(
-                    "https://"
-                )
+                images.startsWith("http://") ||
+                images.startsWith("https://")
             ) {
                 return [images];
             }
+
         }
     }
-
 
     return [];
 }
 
 
-/* =====================================================
-   SIZE HELPER
-===================================================== */
+/* =========================================================
+   2. PRODUCT SIZE HELPER
+   ========================================================= */
 
 function getSizesArray(sizes) {
 
@@ -83,78 +57,212 @@ function getSizesArray(sizes) {
         return [];
     }
 
-
     if (Array.isArray(sizes)) {
         return sizes;
     }
-
 
     if (typeof sizes === "string") {
 
         try {
 
-            const parsed =
-                JSON.parse(sizes);
-
+            const parsed = JSON.parse(sizes);
 
             if (Array.isArray(parsed)) {
                 return parsed;
+            }
+
+            if (typeof parsed === "string") {
+                return [parsed];
             }
 
         } catch (error) {
 
             return sizes
                 .split(",")
-                .map(
-                    size =>
-                        size.trim()
-                )
-                .filter(
-                    size =>
-                        size !== ""
-                );
+                .map(function (size) {
+                    return size.trim();
+                })
+                .filter(Boolean);
+
         }
     }
-
 
     return [];
 }
 
 
-/* =====================================================
-   LOAD PRODUCTS
-===================================================== */
+/* =========================================================
+   3. CART
+   ========================================================= */
+
+let cart = [];
+
+
+/* =========================================================
+   4. FORCE PRODUCT SIZE
+   ========================================================= */
+
+function setupProductLayout() {
+
+    const style = document.createElement("style");
+
+    style.innerHTML = `
+
+        /* PRODUCT GRID */
+
+        .product-grid {
+            display: grid !important;
+            grid-template-columns: repeat(
+                auto-fill,
+                minmax(220px, 1fr)
+            ) !important;
+
+            gap: 24px !important;
+
+            width: 100% !important;
+            max-width: 1200px !important;
+
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+
+        /* PRODUCT CARD */
+
+        .product-card {
+            width: 100% !important;
+            max-width: 280px !important;
+
+            margin-left: auto !important;
+            margin-right: auto !important;
+
+            overflow: hidden !important;
+
+            box-sizing: border-box !important;
+        }
+
+
+        /* PRODUCT IMAGE BOX */
+
+        .product-image {
+            width: 100% !important;
+
+            height: 280px !important;
+
+            overflow: hidden !important;
+
+            position: relative !important;
+
+            background: #f7f7f7 !important;
+
+            display: flex !important;
+
+            align-items: center !important;
+
+            justify-content: center !important;
+        }
+
+
+        /* PRODUCT IMAGE */
+
+        .product-image img {
+
+            width: 100% !important;
+
+            height: 280px !important;
+
+            max-width: 100% !important;
+
+            object-fit: contain !important;
+
+            display: block !important;
+        }
+
+
+        /* PRODUCT INFORMATION */
+
+        .product-info {
+            padding: 14px !important;
+        }
+
+
+        /* TABLET */
+
+        @media (max-width: 900px) {
+
+            .product-grid {
+
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr))
+                !important;
+
+                gap: 18px !important;
+            }
+
+            .product-card {
+                max-width: 100% !important;
+            }
+
+            .product-image {
+                height: 260px !important;
+            }
+
+            .product-image img {
+                height: 260px !important;
+            }
+        }
+
+
+        /* MOBILE */
+
+        @media (max-width: 600px) {
+
+            .product-grid {
+
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr))
+                !important;
+
+                gap: 10px !important;
+            }
+
+            .product-image {
+
+                height: 220px !important;
+            }
+
+            .product-image img {
+
+                height: 220px !important;
+            }
+
+            .product-info {
+
+                padding: 10px !important;
+            }
+        }
+
+    `;
+
+    document.head.appendChild(style);
+}
+
+
+/* =========================================================
+   5. LOAD PRODUCTS FROM SUPABASE
+   ========================================================= */
 
 async function loadProducts() {
 
-    const productsContainer =
-        document.getElementById(
-            "products"
-        ) ||
-        document.getElementById(
-            "productsGrid"
-        ) ||
-        document.getElementById(
-            "productGrid"
-        );
+    const productGrid =
+        document.querySelector(".product-grid");
 
-
-    if (!productsContainer) {
-
-        console.error(
-            "Product container not found."
-        );
-
+    if (!productGrid) {
         return;
     }
 
-
-    productsContainer.innerHTML =
-        `
-        <div class="loading-products">
-            Loading collection...
-        </div>
-        `;
+    productGrid.innerHTML =
+        "<p>Loading products...</p>";
 
 
     try {
@@ -162,16 +270,15 @@ async function loadProducts() {
         const {
             data: products,
             error
-        } =
-            await supabaseClient
-                .from("products")
-                .select("*")
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                );
+        } = await supabaseClient
+            .from("products")
+            .select("*")
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
 
 
         if (error) {
@@ -179,8 +286,7 @@ async function loadProducts() {
         }
 
 
-        productsContainer.innerHTML =
-            "";
+        productGrid.innerHTML = "";
 
 
         if (
@@ -188,33 +294,28 @@ async function loadProducts() {
             products.length === 0
         ) {
 
-            productsContainer.innerHTML =
-                `
-                <div class="empty-products">
-                    <h3>
-                        Collection Coming Soon
-                    </h3>
-
-                    <p>
-                        New styles are being added.
-                    </p>
+            productGrid.innerHTML = `
+                <div class="no-products">
+                    <h3>Collection Coming Soon</h3>
+                    <p>New products will be added soon.</p>
                 </div>
-                `;
+            `;
 
             return;
         }
 
 
-        products.forEach(
-            product => {
+        products.forEach(function (product) {
 
-                createProductCard(
-                    product,
-                    productsContainer
-                );
-            }
-        );
+            createProductCard(
+                productGrid,
+                product
+            );
 
+        });
+
+
+        updateCartCount();
 
     } catch (error) {
 
@@ -223,48 +324,41 @@ async function loadProducts() {
             error
         );
 
-
-        productsContainer.innerHTML =
-            `
-            <div class="empty-products">
-                <h3>
-                    Unable to load products
-                </h3>
-
-                <p>
-                    Please refresh the page.
-                </p>
+        productGrid.innerHTML = `
+            <div class="no-products">
+                <h3>Unable to load products</h3>
+                <p>Please refresh the page.</p>
             </div>
-            `;
+        `;
     }
 }
 
 
-/* =====================================================
-   CREATE PRODUCT CARD
-===================================================== */
+/* =========================================================
+   6. CREATE PRODUCT CARD
+   ========================================================= */
 
 function createProductCard(
-    product,
-    container
+    productGrid,
+    product
 ) {
 
-    const card =
-        document.createElement(
-            "div"
-        );
+    const article =
+        document.createElement("article");
 
 
-    card.className =
+    article.className =
         "product-card";
 
 
-    /* IMAGE */
+    article.setAttribute(
+        "data-product-id",
+        product.id
+    );
+
 
     const images =
-        getImagesArray(
-            product.images
-        );
+        getImagesArray(product.images);
 
 
     const image =
@@ -273,101 +367,88 @@ function createProductCard(
             : "";
 
 
-    /* SIZES */
-
     const sizes =
-        getSizesArray(
-            product.sizes
-        );
+        getSizesArray(product.sizes);
 
 
-    const sizeText =
-        sizes.length > 0
-            ? sizes.join(", ")
-            : "Available sizes";
+    let sizeText = "";
 
 
-    /* PRICE */
+    if (sizes.length > 0) {
 
-    const price =
-        Number(
-            product.price
-        ) || 0;
+        sizeText =
+            `<p class="product-sizes">
+                Sizes: ${sizes.join(", ")}
+            </p>`;
 
-
-    const mrp =
-        Number(
-            product.mrp
-        ) || 0;
-
-
-    /* DISCOUNT */
-
-    let discountText = "";
-
-
-    if (
-        mrp > price &&
-        mrp > 0
-    ) {
-
-        const discount =
-            Math.round(
-                (
-                    (mrp - price) /
-                    mrp
-                ) * 100
-            );
-
-
-        discountText =
-            `
-            <span class="discount">
-                ${discount}% OFF
-            </span>
-            `;
     }
 
 
-    /* IMAGE HTML */
-
-    const imageHTML =
-        image
-            ? `
-                <div class="product-image">
-                    <img
-                        src="${image}"
-                        alt="${product.name}"
-                        loading="lazy"
-                        onerror="
-                            this.style.display='none';
-                            this.parentElement.classList.add('image-error');
-                        "
-                    >
-                </div>
-            `
-            : `
-                <div class="product-image image-error">
-                    <span>
-                        Image unavailable
-                    </span>
-                </div>
-            `;
+    const price =
+        Number(product.price) || 0;
 
 
-    card.innerHTML =
-        `
+    const mrp =
+        Number(product.mrp) || 0;
 
-        ${imageHTML}
+
+    let imageHTML = "";
+
+
+    if (image) {
+
+        imageHTML = `
+            <img
+                src="${image}"
+                alt="${product.name || "Product"}"
+                loading="lazy"
+            >
+        `;
+
+    } else {
+
+        imageHTML = `
+            <div class="no-product-image">
+                No Image
+            </div>
+        `;
+
+    }
+
+
+    article.innerHTML = `
+
+        <div class="product-image">
+
+            <span class="sale-tag">
+                NEW
+            </span>
+
+            ${imageHTML}
+
+        </div>
+
 
         <div class="product-info">
 
-            <h3 class="product-name">
-                ${product.name}
+            <h3>
+                ${product.name || "Product"}
             </h3>
 
 
-            <div class="product-price">
+            ${
+                product.description
+                    ? `<p class="product-description">
+                        ${product.description}
+                       </p>`
+                    : ""
+            }
+
+
+            ${sizeText}
+
+
+            <div class="price-area">
 
                 <strong>
                     ₹${price}
@@ -375,205 +456,88 @@ function createProductCard(
 
                 ${
                     mrp > price
-                        ? `
-                            <del>
-                                ₹${mrp}
-                            </del>
-                        `
+                        ? `<del>
+                            ₹${mrp}
+                           </del>`
                         : ""
                 }
-
-                ${discountText}
 
             </div>
 
 
-            <p class="product-description">
-                ${
-                    product.description ||
-                    ""
-                }
-            </p>
-
-
-            <p class="product-sizes">
-                <strong>
-                    Sizes:
-                </strong>
-
-                ${sizeText}
-            </p>
-
-
             <button
-                class="add-to-cart-button"
+                class="add-cart"
                 type="button"
+                onclick="addToCart(
+                    '${String(
+                        product.name || "Product"
+                    ).replace(/'/g, "\\'")}',
+                    ${price}
+                )"
             >
                 Add to Cart
             </button>
 
         </div>
 
-        `;
+    `;
 
 
-    /* ADD TO CART */
-
-    const addButton =
-        card.querySelector(
-            ".add-to-cart-button"
-        );
-
-
-    if (addButton) {
-
-        addButton.addEventListener(
-            "click",
-            function () {
-
-                addToCart(
-                    product.name,
-                    price,
-                    product.id,
-                    image,
-                    sizes
-                );
-            }
-        );
-    }
-
-
-    container.appendChild(
-        card
-    );
+    productGrid.appendChild(article);
 }
 
 
-/* =====================================================
-   ADD TO CART
-===================================================== */
+/* =========================================================
+   7. ADD TO CART
+   ========================================================= */
 
 function addToCart(
     productName,
-    price,
-    productId = null,
-    image = "",
-    sizes = []
+    price
 ) {
 
-    const existing =
-        cart.find(
-            item =>
-                item.id ===
-                productId
-        );
-
-
-    if (existing) {
-
-        existing.quantity += 1;
-
-    } else {
-
-        cart.push({
-
-            id:
-                productId ||
-                Date.now(),
-
-            name:
-                productName,
-
-            price:
-                Number(price) || 0,
-
-            image:
-                image,
-
-            sizes:
-                sizes,
-
-            quantity:
-                1
-        });
-    }
+    cart.push({
+        name: productName,
+        price: price
+    });
 
 
     updateCartCount();
 
-    updateCartDisplay();
-
 
     alert(
         productName +
-        " added to cart."
+        " added to cart!"
     );
 }
 
 
-/* =====================================================
-   UPDATE CART COUNT
-===================================================== */
+/* =========================================================
+   8. UPDATE CART COUNT
+   ========================================================= */
 
 function updateCartCount() {
 
     const cartCount =
-        document.getElementById(
-            "cart-count"
-        ) ||
-        document.getElementById(
-            "cartCount"
+        document.querySelector(
+            ".cart-count"
         );
 
 
-    if (!cartCount) {
-        return;
+    if (cartCount) {
+
+        cartCount.textContent =
+            cart.length;
+
     }
-
-
-    const totalItems =
-        cart.reduce(
-            (
-                total,
-                item
-            ) =>
-                total +
-                item.quantity,
-            0
-        );
-
-
-    cartCount.textContent =
-        totalItems;
 }
 
 
-/* =====================================================
-   SHOW CART
-===================================================== */
+/* =========================================================
+   9. SHOW CART
+   ========================================================= */
 
 function showCart() {
-
-    updateCartDisplay();
-
-
-    const cartModal =
-        document.getElementById(
-            "cartModal"
-        );
-
-
-    if (cartModal) {
-
-        cartModal.style.display =
-            "flex";
-
-        return;
-    }
-
-
-    /* If no modal exists,
-       show cart information */
 
     if (cart.length === 0) {
 
@@ -585,211 +549,41 @@ function showCart() {
     }
 
 
-    const message =
-        cart
-            .map(
-                item =>
-                    `${item.name} × ${item.quantity} = ₹${item.price * item.quantity}`
-            )
-            .join("\n");
+    let message =
+        "Your Cart:\n\n";
 
 
-    alert(
-        "Your Cart:\n\n" +
-        message
-    );
+    let total = 0;
+
+
+    cart.forEach(function (item, index) {
+
+        message +=
+            `${index + 1}. ${item.name} - ₹${item.price}\n`;
+
+        total +=
+            Number(item.price);
+
+    });
+
+
+    message +=
+        `\nTotal: ₹${total}`;
+
+
+    alert(message);
 }
 
 
-/* =====================================================
-   CLOSE CART
-===================================================== */
-
-function closeCart() {
-
-    const cartModal =
-        document.getElementById(
-            "cartModal"
-        );
-
-
-    if (cartModal) {
-
-        cartModal.style.display =
-            "none";
-    }
-}
-
-
-/* =====================================================
-   UPDATE CART DISPLAY
-===================================================== */
-
-function updateCartDisplay() {
-
-    const cartItems =
-        document.getElementById(
-            "cartItems"
-        );
-
-
-    const cartTotal =
-        document.getElementById(
-            "cartTotal"
-        );
-
-
-    if (cartItems) {
-
-        cartItems.innerHTML =
-            "";
-
-
-        if (cart.length === 0) {
-
-            cartItems.innerHTML =
-                `
-                <p>
-                    Your cart is empty.
-                </p>
-                `;
-
-        } else {
-
-            cart.forEach(
-                (item, index) => {
-
-                    const itemDiv =
-                        document.createElement(
-                            "div"
-                        );
-
-
-                    itemDiv.className =
-                        "cart-item";
-
-
-                    itemDiv.innerHTML =
-                        `
-
-                        ${
-                            item.image
-                                ? `
-                                    <img
-                                        src="${item.image}"
-                                        alt="${item.name}"
-                                    >
-                                `
-                                : ""
-                        }
-
-                        <div>
-
-                            <h4>
-                                ${item.name}
-                            </h4>
-
-                            <p>
-                                ₹${item.price}
-                            </p>
-
-                            <p>
-                                Quantity:
-                                ${item.quantity}
-                            </p>
-
-                            <button
-                                type="button"
-                                onclick="
-                                    removeFromCart(${index})
-                                "
-                            >
-                                Remove
-                            </button>
-
-                        </div>
-
-                        `;
-
-
-                    cartItems.appendChild(
-                        itemDiv
-                    );
-                }
-            );
-        }
-    }
-
-
-    if (cartTotal) {
-
-        const total =
-            cart.reduce(
-                (
-                    sum,
-                    item
-                ) =>
-                    sum +
-                    (
-                        item.price *
-                        item.quantity
-                    ),
-                0
-            );
-
-
-        cartTotal.textContent =
-            "₹" + total;
-    }
-}
-
-
-/* =====================================================
-   REMOVE FROM CART
-===================================================== */
-
-function removeFromCart(
-    index
-) {
-
-    if (
-        index >= 0 &&
-        index < cart.length
-    ) {
-
-        cart.splice(
-            index,
-            1
-        );
-    }
-
-
-    updateCartCount();
-
-    updateCartDisplay();
-}
-
-
-/* =====================================================
-   WHATSAPP ORDER
-===================================================== */
+/* =========================================================
+   10. WHATSAPP ORDER
+   ========================================================= */
 
 function orderOnWhatsApp(
     phoneNumber
 ) {
 
-    if (
-        !phoneNumber
-    ) {
-
-        phoneNumber =
-            "7088443473";
-    }
-
-
-    if (
-        cart.length === 0
-    ) {
+    if (cart.length === 0) {
 
         alert(
             "Your cart is empty."
@@ -800,35 +594,29 @@ function orderOnWhatsApp(
 
 
     let message =
-        "Hello Abhi Collection,%0A%0AI would like to order:%0A";
-
-
-    cart.forEach(
-        item => {
-
-            message +=
-                `%0A• ${item.name} × ${item.quantity} - ₹${item.price * item.quantity}`;
-        }
-    );
-
-
-    const total =
-        cart.reduce(
-            (
-                sum,
-                item
-            ) =>
-                sum +
-                (
-                    item.price *
-                    item.quantity
-                ),
-            0
-        );
+        "Hello Abhi Collection,%0A%0A";
 
 
     message +=
-        `%0A%0ATotal: ₹${total}`;
+        "I want to order:%0A";
+
+
+    let total = 0;
+
+
+    cart.forEach(function (item, index) {
+
+        message +=
+            `${index + 1}. ${item.name} - ₹${item.price}%0A`;
+
+        total +=
+            Number(item.price);
+
+    });
+
+
+    message +=
+        `%0ATotal: ₹${total}`;
 
 
     const whatsappURL =
@@ -842,9 +630,53 @@ function orderOnWhatsApp(
 }
 
 
-/* =====================================================
-   MAKE FUNCTIONS AVAILABLE
-===================================================== */
+/* =========================================================
+   11. CART BUTTON
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        const button =
+            event.target.closest(
+                ".cart-button, #cartButton, #cart-btn"
+            );
+
+
+        if (button) {
+
+            showCart();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   12. INITIALIZE WEBSITE
+   ========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        setupProductLayout();
+
+        loadProducts();
+
+        console.log(
+            "ABHI COLLECTION WEBSITE LOADED"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   13. MAKE FUNCTIONS AVAILABLE TO HTML
+   ========================================================= */
 
 window.addToCart =
     addToCart;
@@ -852,78 +684,8 @@ window.addToCart =
 window.showCart =
     showCart;
 
-window.closeCart =
-    closeCart;
-
-window.removeFromCart =
-    removeFromCart;
-
-window.orderOnWhatsApp =
-    orderOnWhatsApp;
-
 window.updateCartCount =
     updateCartCount;
 
-
-/* =====================================================
-   CART BUTTON
-===================================================== */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        const cartButton =
-            document.getElementById(
-                "cartButton"
-            );
-
-
-        if (cartButton) {
-
-            cartButton.addEventListener(
-                "click",
-                showCart
-            );
-        }
-
-
-        /* Close modal when clicking
-           outside */
-
-        const cartModal =
-            document.getElementById(
-                "cartModal"
-            );
-
-
-        if (cartModal) {
-
-            cartModal.addEventListener(
-                "click",
-                function (event) {
-
-                    if (
-                        event.target ===
-                        cartModal
-                    ) {
-
-                        closeCart();
-                    }
-                }
-            );
-        }
-
-
-        updateCartCount();
-
-        updateCartDisplay();
-    }
-);
-
-
-/* =====================================================
-   LOAD PRODUCTS
-===================================================== */
-
-loadProducts();
+window.orderOnWhatsApp =
+    orderOnWhatsApp;
