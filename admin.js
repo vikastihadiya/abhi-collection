@@ -1,6 +1,7 @@
 /* =====================================================
    ABHI COLLECTION
    ADMIN PANEL — SUPABASE
+   UP TO 10 IMAGES PER PRODUCT
 ===================================================== */
 
 
@@ -14,12 +15,10 @@ function getImagesArray(images) {
         return [];
     }
 
-    // Already an array
     if (Array.isArray(images)) {
-        return images;
+        return images.filter(Boolean);
     }
 
-    // Stored as text
     if (typeof images === "string") {
 
         try {
@@ -27,7 +26,7 @@ function getImagesArray(images) {
             const parsed = JSON.parse(images);
 
             if (Array.isArray(parsed)) {
-                return parsed;
+                return parsed.filter(Boolean);
             }
 
             if (typeof parsed === "string") {
@@ -36,7 +35,6 @@ function getImagesArray(images) {
 
         } catch (error) {
 
-            // If it is simply a URL
             if (
                 images.startsWith("http://") ||
                 images.startsWith("https://")
@@ -67,11 +65,8 @@ const adminContainer =
 async function checkAdminLogin() {
 
     const {
-        data: {
-            session
-        }
+        data: { session }
     } = await supabaseClient.auth.getSession();
-
 
     if (session) {
 
@@ -102,67 +97,43 @@ async function checkAdminLogin() {
 
 if (loginForm) {
 
-    loginForm.addEventListener(
-        "submit",
-        async function (event) {
+    loginForm.addEventListener("submit", async function (event) {
 
-            event.preventDefault();
+        event.preventDefault();
 
-            const email =
-                document
-                    .getElementById("adminEmail")
-                    .value
-                    .trim();
+        const email =
+            document.getElementById("adminEmail").value.trim();
 
-            const password =
-                document
-                    .getElementById("adminPassword")
-                    .value;
+        const password =
+            document.getElementById("adminPassword").value;
 
-            const loginMessage =
-                document.getElementById(
-                    "loginMessage"
-                );
+        const loginMessage =
+            document.getElementById("loginMessage");
 
+        loginMessage.textContent = "Logging in...";
 
-            loginMessage.textContent =
-                "Logging in...";
+        const { error } =
+            await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
 
+        if (error) {
 
-            const {
-                error
-            } =
-                await supabaseClient.auth
-                    .signInWithPassword({
-
-                        email: email,
-
-                        password: password
-
-                    });
-
-
-            if (error) {
-
-                console.error(error);
-
-                loginMessage.textContent =
-                    "Login failed: " +
-                    error.message;
-
-                return;
-            }
-
+            console.error(error);
 
             loginMessage.textContent =
-                "Login successful!";
+                "Login failed: " + error.message;
 
-
-            await checkAdminLogin();
-
-            await displayAdminProducts();
+            return;
         }
-    );
+
+        loginMessage.textContent =
+            "Login successful!";
+
+        await checkAdminLogin();
+        await displayAdminProducts();
+    });
 }
 
 
@@ -171,141 +142,113 @@ if (loginForm) {
 ===================================================== */
 
 const forgotPasswordButton =
-    document.getElementById(
-        "forgotPasswordButton"
-    );
-
+    document.getElementById("forgotPasswordButton");
 
 if (forgotPasswordButton) {
 
-    forgotPasswordButton.addEventListener(
-        "click",
-        async function () {
+    forgotPasswordButton.addEventListener("click", async function () {
 
-            const email =
-                document
-                    .getElementById("adminEmail")
-                    .value
-                    .trim();
+        const email =
+            document.getElementById("adminEmail").value.trim();
 
-            const loginMessage =
-                document.getElementById(
-                    "loginMessage"
-                );
+        const loginMessage =
+            document.getElementById("loginMessage");
 
-
-            if (!email) {
-
-                loginMessage.textContent =
-                    "Please enter your admin email first.";
-
-                return;
-            }
-
+        if (!email) {
 
             loginMessage.textContent =
-                "Sending password reset email...";
+                "Please enter your admin email first.";
 
-
-            const {
-                error
-            } =
-                await supabaseClient.auth
-                    .resetPasswordForEmail(
-                        email,
-                        {
-                            redirectTo:
-                                "https://vikastihadiya.github.io/abhi-collection/reset-password.html"
-                        }
-                    );
-
-
-            if (error) {
-
-                console.error(error);
-
-                loginMessage.textContent =
-                    "Failed to send password recovery: " +
-                    error.message;
-
-                return;
-            }
-
-
-            loginMessage.textContent =
-                "Password reset email sent. Check your email.";
+            return;
         }
-    );
+
+        loginMessage.textContent =
+            "Sending password reset email...";
+
+        const { error } =
+            await supabaseClient.auth.resetPasswordForEmail(
+                email,
+                {
+                    redirectTo:
+                        "https://vikastihadiya.github.io/abhi-collection/reset-password.html"
+                }
+            );
+
+        if (error) {
+
+            console.error(error);
+
+            loginMessage.textContent =
+                "Failed to send password recovery: " +
+                error.message;
+
+            return;
+        }
+
+        loginMessage.textContent =
+            "Password reset email sent. Check your email.";
+    });
 }
 
 
 /* =====================================================
    IMAGE PREVIEW
+   MAXIMUM 10 IMAGES
 ===================================================== */
 
 const imageInput =
-    document.getElementById(
-        "productImages"
-    );
+    document.getElementById("productImages");
 
 const imagePreview =
-    document.getElementById(
-        "imagePreview"
-    );
+    document.getElementById("imagePreview");
 
 
 if (imageInput) {
 
-    imageInput.addEventListener(
-        "change",
-        function () {
+    imageInput.addEventListener("change", function () {
 
+        if (imagePreview) {
             imagePreview.innerHTML = "";
-
-            const files =
-                Array.from(this.files);
-
-
-            if (files.length > 5) {
-
-                alert(
-                    "Please select maximum 5 photos."
-                );
-
-                this.value = "";
-
-                return;
-            }
-
-
-            files.forEach(file => {
-
-                const reader =
-                    new FileReader();
-
-
-                reader.onload =
-                    function (event) {
-
-                        const img =
-                            document.createElement(
-                                "img"
-                            );
-
-                        img.src =
-                            event.target.result;
-
-                        imagePreview.appendChild(
-                            img
-                        );
-                    };
-
-
-                reader.readAsDataURL(file);
-            });
-
         }
-    );
+
+        const files =
+            Array.from(this.files);
+
+        /* MAXIMUM 10 */
+
+        if (files.length > 10) {
+
+            alert(
+                "Please select maximum 10 photos."
+            );
+
+            this.value = "";
+
+            return;
+        }
+
+        files.forEach(file => {
+
+            const reader =
+                new FileReader();
+
+            reader.onload = function (event) {
+
+                const img =
+                    document.createElement("img");
+
+                img.src =
+                    event.target.result;
+
+                if (imagePreview) {
+                    imagePreview.appendChild(img);
+                }
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+    });
 }
 
 
@@ -314,399 +257,348 @@ if (imageInput) {
 ===================================================== */
 
 const productForm =
-    document.getElementById(
-        "productForm"
-    );
+    document.getElementById("productForm");
 
 
 if (productForm) {
 
-    productForm.addEventListener(
-        "submit",
-        async function (event) {
+    productForm.addEventListener("submit", async function (event) {
 
-            event.preventDefault();
+        event.preventDefault();
 
+        const name =
+            document.getElementById("productName")
+                .value
+                .trim();
 
-            const name =
-                document
-                    .getElementById("productName")
-                    .value
-                    .trim();
+        const price =
+            Number(
+                document.getElementById("productPrice").value
+            );
 
+        const mrp =
+            Number(
+                document.getElementById("productMRP").value
+            );
 
-            const price =
-                Number(
-                    document
-                        .getElementById("productPrice")
-                        .value
-                );
+        const description =
+            document.getElementById("productDescription")
+                .value
+                .trim();
 
+        const sizes =
+            document.getElementById("productSizes")
+                .value
+                .split(",")
+                .map(size => size.trim())
+                .filter(size => size !== "");
 
-            const mrp =
-                Number(
-                    document
-                        .getElementById("productMRP")
-                        .value
-                );
-
-
-            const description =
-                document
-                    .getElementById(
-                        "productDescription"
-                    )
-                    .value
-                    .trim();
+        const files =
+            imageInput
+                ? Array.from(imageInput.files)
+                : [];
 
 
-            const sizes =
-                document
-                    .getElementById("productSizes")
-                    .value
-                    .split(",")
-                    .map(
-                        size => size.trim()
-                    )
-                    .filter(
-                        size => size !== ""
-                    );
+        /* =================================================
+           CHECK IMAGES
+        ================================================= */
+
+        if (files.length === 0) {
+
+            alert(
+                "Please select at least one product photo."
+            );
+
+            return;
+        }
 
 
-            const files =
-                imageInput
-                    ? Array.from(
-                        imageInput.files
-                    )
-                    : [];
+        /* MAXIMUM 10 IMAGES */
+
+        if (files.length > 10) {
+
+            alert(
+                "Maximum 10 photos allowed."
+            );
+
+            return;
+        }
 
 
-            /* CHECK IMAGES */
+        const saveButton =
+            document.querySelector(
+                "#productForm .save-button"
+            );
 
-            if (files.length === 0) {
 
-                alert(
-                    "Please select at least one product photo."
-                );
+        if (saveButton) {
 
-                return;
+            saveButton.disabled = true;
+
+            saveButton.textContent =
+                "Uploading...";
+        }
+
+
+        let product = null;
+
+        const uploadedFilePaths = [];
+
+
+        try {
+
+            /* =================================================
+               STEP 1 — CREATE PRODUCT
+            ================================================= */
+
+            const {
+                data,
+                error: productError
+            } =
+                await supabaseClient
+                    .from("products")
+                    .insert([
+                        {
+                            name: name,
+                            price: price,
+                            mrp: mrp,
+                            description: description,
+
+                            /* sizes column is TEXT */
+
+                            sizes:
+                                JSON.stringify(sizes)
+                        }
+                    ])
+                    .select()
+                    .single();
+
+
+            if (productError) {
+                throw productError;
             }
 
 
-            if (files.length > 5) {
-
-                alert(
-                    "Maximum 5 photos allowed."
-                );
-
-                return;
-            }
+            product = data;
 
 
-            const saveButton =
-                document.querySelector(
-                    "#productForm .save-button"
-                );
+            /* =================================================
+               STEP 2 — UPLOAD UP TO 10 IMAGES
+            ================================================= */
+
+            const imageUrls = [];
 
 
-            if (saveButton) {
+            for (
+                let i = 0;
+                i < files.length;
+                i++
+            ) {
 
-                saveButton.disabled = true;
-
-                saveButton.textContent =
-                    "Uploading...";
-            }
-
-
-            let product = null;
-
-            const uploadedFilePaths = [];
+                const file =
+                    files[i];
 
 
-            try {
+                /* Get extension */
 
-                /* =================================================
-                   STEP 1 — CREATE PRODUCT
-                ================================================= */
+                const originalName =
+                    file.name || "";
+
+                const extension =
+                    originalName
+                        .split(".")
+                        .pop()
+                        .toLowerCase();
+
+                const safeExtension =
+                    extension || "jpg";
+
+
+                /* Unique file path */
+
+                const filePath =
+                    `${product.id}/${Date.now()}-${i}.${safeExtension}`;
+
+
+                /* Upload */
 
                 const {
-                    data,
-                    error: productError
+                    error: uploadError
                 } =
                     await supabaseClient
-                        .from("products")
-                        .insert([
+                        .storage
+                        .from("product-images")
+                        .upload(
+                            filePath,
+                            file,
                             {
-                                name: name,
-
-                                price: price,
-
-                                mrp: mrp,
-
-                                description:
-                                    description,
-
-                                // sizes column is TEXT
-                                sizes:
-                                    JSON.stringify(
-                                        sizes
-                                    )
+                                cacheControl: "3600",
+                                upsert: false,
+                                contentType:
+                                    file.type ||
+                                    "image/jpeg"
                             }
-                        ])
-                        .select()
-                        .single();
+                        );
 
 
-                if (productError) {
-                    throw productError;
+                if (uploadError) {
+                    throw uploadError;
                 }
 
 
-                product = data;
+                uploadedFilePaths.push(
+                    filePath
+                );
 
 
-                /* =================================================
-                   STEP 2 — UPLOAD IMAGES
-                ================================================= */
+                /* Get public URL */
 
-                const imageUrls = [];
+                const {
+                    data: publicUrlData
+                } =
+                    supabaseClient
+                        .storage
+                        .from("product-images")
+                        .getPublicUrl(
+                            filePath
+                        );
 
 
-                for (
-                    let i = 0;
-                    i < files.length;
-                    i++
+                if (
+                    !publicUrlData ||
+                    !publicUrlData.publicUrl
                 ) {
 
-                    const file =
-                        files[i];
-
-
-                    /* Get extension safely */
-
-                    const originalName =
-                        file.name || "";
-
-
-                    const extension =
-                        originalName
-                            .split(".")
-                            .pop()
-                            .toLowerCase();
-
-
-                    const safeExtension =
-                        extension || "jpg";
-
-
-                    /* Unique file path */
-
-                    const filePath =
-                        `${product.id}/${Date.now()}-${i}.${safeExtension}`;
-
-
-                    /* Upload */
-
-                    const {
-                        error: uploadError
-                    } =
-                        await supabaseClient
-                            .storage
-                            .from(
-                                "product-images"
-                            )
-                            .upload(
-                                filePath,
-                                file,
-                                {
-                                    cacheControl:
-                                        "3600",
-
-                                    upsert:
-                                        false,
-
-                                    contentType:
-                                        file.type ||
-                                        "image/jpeg"
-                                }
-                            );
-
-
-                    if (uploadError) {
-                        throw uploadError;
-                    }
-
-
-                    uploadedFilePaths.push(
-                        filePath
-                    );
-
-
-                    /* =================================================
-                       STEP 3 — GET PUBLIC URL
-                    ================================================= */
-
-                    const {
-                        data:
-                            publicUrlData
-                    } =
-                        supabaseClient
-                            .storage
-                            .from(
-                                "product-images"
-                            )
-                            .getPublicUrl(
-                                filePath
-                            );
-
-
-                    if (
-                        !publicUrlData ||
-                        !publicUrlData.publicUrl
-                    ) {
-
-                        throw new Error(
-                            "Could not create image URL."
-                        );
-                    }
-
-
-                    imageUrls.push(
-                        publicUrlData.publicUrl
+                    throw new Error(
+                        "Could not create image URL."
                     );
                 }
 
 
-                /* =================================================
-                   STEP 4 — SAVE IMAGE URLS AS TEXT
-                ================================================= */
+                imageUrls.push(
+                    publicUrlData.publicUrl
+                );
+            }
 
-                const {
-                    error: updateError
-                } =
+
+            /* =================================================
+               STEP 3 — SAVE IMAGE URLS
+            ================================================= */
+
+            const {
+                error: updateError
+            } =
+                await supabaseClient
+                    .from("products")
+                    .update({
+                        images:
+                            JSON.stringify(imageUrls)
+                    })
+                    .eq(
+                        "id",
+                        product.id
+                    );
+
+
+            if (updateError) {
+                throw updateError;
+            }
+
+
+            /* =================================================
+               SUCCESS
+            ================================================= */
+
+            alert(
+                `Product saved successfully with ${imageUrls.length} image(s)!`
+            );
+
+
+            productForm.reset();
+
+
+            if (imagePreview) {
+                imagePreview.innerHTML = "";
+            }
+
+
+            await displayAdminProducts();
+
+
+        } catch (error) {
+
+            console.error(
+                "Product save error:",
+                error
+            );
+
+
+            /* Delete product if upload failed */
+
+            if (product && product.id) {
+
+                try {
+
                     await supabaseClient
                         .from("products")
-                        .update({
-
-                            // IMPORTANT:
-                            // images column is TEXT
-                            images:
-                                JSON.stringify(
-                                    imageUrls
-                                )
-
-                        })
+                        .delete()
                         .eq(
                             "id",
                             product.id
                         );
 
+                } catch (cleanupError) {
 
-                if (updateError) {
-                    throw updateError;
-                }
-
-
-                /* =================================================
-                   SUCCESS
-                ================================================= */
-
-                alert(
-                    "Product saved successfully!"
-                );
-
-
-                productForm.reset();
-
-
-                if (imagePreview) {
-                    imagePreview.innerHTML =
-                        "";
-                }
-
-
-                await displayAdminProducts();
-
-
-            } catch (error) {
-
-                console.error(
-                    "Product save error:",
-                    error
-                );
-
-
-                /* If product was created but image
-                   upload failed, remove product */
-
-                if (product && product.id) {
-
-                    try {
-
-                        await supabaseClient
-                            .from("products")
-                            .delete()
-                            .eq(
-                                "id",
-                                product.id
-                            );
-
-                    } catch (cleanupError) {
-
-                        console.error(
-                            "Cleanup error:",
-                            cleanupError
-                        );
-                    }
-                }
-
-
-                /* Remove any uploaded images */
-
-                if (
-                    uploadedFilePaths.length >
-                    0
-                ) {
-
-                    try {
-
-                        await supabaseClient
-                            .storage
-                            .from(
-                                "product-images"
-                            )
-                            .remove(
-                                uploadedFilePaths
-                            );
-
-                    } catch (cleanupError) {
-
-                        console.error(
-                            "Image cleanup error:",
-                            cleanupError
-                        );
-                    }
-                }
-
-
-                alert(
-                    "Something went wrong:\n" +
-                    error.message
-                );
-
-            } finally {
-
-                if (saveButton) {
-
-                    saveButton.disabled =
-                        false;
-
-                    saveButton.textContent =
-                        "Save Product";
+                    console.error(
+                        "Cleanup error:",
+                        cleanupError
+                    );
                 }
             }
+
+
+            /* Delete uploaded images */
+
+            if (
+                uploadedFilePaths.length > 0
+            ) {
+
+                try {
+
+                    await supabaseClient
+                        .storage
+                        .from("product-images")
+                        .remove(
+                            uploadedFilePaths
+                        );
+
+                } catch (cleanupError) {
+
+                    console.error(
+                        "Image cleanup error:",
+                        cleanupError
+                    );
+                }
+            }
+
+
+            alert(
+                "Something went wrong:\n" +
+                error.message
+            );
+
+        } finally {
+
+            if (saveButton) {
+
+                saveButton.disabled = false;
+
+                saveButton.textContent =
+                    "Save Product";
+            }
         }
-    );
+
+    });
 }
 
 
@@ -717,19 +609,14 @@ if (productForm) {
 async function displayAdminProducts() {
 
     const container =
-        document.getElementById(
-            "adminProducts"
-        );
-
+        document.getElementById("adminProducts");
 
     if (!container) {
         return;
     }
 
-
     container.innerHTML =
         "<p>Loading products...</p>";
-
 
     const {
         data: products,
@@ -772,77 +659,71 @@ async function displayAdminProducts() {
     }
 
 
-    products.forEach(
-        product => {
+    products.forEach(product => {
 
-            const div =
-                document.createElement(
-                    "div"
-                );
+        const div =
+            document.createElement("div");
 
-
-            div.className =
-                "admin-product";
+        div.className =
+            "admin-product";
 
 
-            /* IMPORTANT:
-               Convert TEXT/JSON into array */
-
-            const images =
-                getImagesArray(
-                    product.images
-                );
-
-
-            const firstImage =
-                images.length > 0
-                    ? images[0]
-                    : "";
-
-
-            div.innerHTML = `
-
-                ${
-                    firstImage
-                        ? `
-                            <img
-                                src="${firstImage}"
-                                alt="${product.name}"
-                            >
-                        `
-                        : `
-                            <div>
-                                No image
-                            </div>
-                        `
-                }
-
-                <div class="admin-product-info">
-
-                    <h3>
-                        ${product.name}
-                    </h3>
-
-                    <p>
-                        ₹${product.price}
-                    </p>
-
-                    <button
-                        class="delete-button"
-                        onclick="deleteProduct(${product.id})"
-                    >
-                        Delete
-                    </button>
-
-                </div>
-            `;
-
-
-            container.appendChild(
-                div
+        const images =
+            getImagesArray(
+                product.images
             );
-        }
-    );
+
+
+        const firstImage =
+            images.length > 0
+                ? images[0]
+                : "";
+
+
+        div.innerHTML = `
+
+            ${
+                firstImage
+                    ? `
+                        <img
+                            src="${firstImage}"
+                            alt="${product.name}"
+                        >
+                    `
+                    : `
+                        <div>
+                            No image
+                        </div>
+                    `
+            }
+
+            <div class="admin-product-info">
+
+                <h3>
+                    ${product.name}
+                </h3>
+
+                <p>
+                    ₹${product.price}
+                </p>
+
+                <p>
+                    ${images.length} image(s)
+                </p>
+
+                <button
+                    class="delete-button"
+                    onclick="deleteProduct(${product.id})"
+                >
+                    Delete
+                </button>
+
+            </div>
+        `;
+
+
+        container.appendChild(div);
+    });
 }
 
 
@@ -850,15 +731,12 @@ async function displayAdminProducts() {
    DELETE PRODUCT
 ===================================================== */
 
-async function deleteProduct(
-    productId
-) {
+async function deleteProduct(productId) {
 
     const confirmDelete =
         confirm(
             "Delete this product?"
         );
-
 
     if (!confirmDelete) {
         return;
@@ -867,9 +745,7 @@ async function deleteProduct(
 
     try {
 
-        /* =================================================
-           GET PRODUCT
-        ================================================= */
+        /* GET PRODUCT */
 
         const {
             data: product,
@@ -890,9 +766,7 @@ async function deleteProduct(
         }
 
 
-        /* =================================================
-           CONVERT IMAGE TEXT TO ARRAY
-        ================================================= */
+        /* CONVERT TEXT TO ARRAY */
 
         const images =
             getImagesArray(
@@ -900,38 +774,27 @@ async function deleteProduct(
             );
 
 
-        /* =================================================
-           GET STORAGE PATHS
-        ================================================= */
+        /* GET STORAGE PATHS */
 
         const filePaths =
             images
                 .map(url => {
 
                     if (
-                        typeof url !==
-                        "string"
+                        typeof url !== "string"
                     ) {
                         return null;
                     }
-
 
                     const marker =
                         "/product-images/";
 
-
                     const position =
-                        url.indexOf(
-                            marker
-                        );
+                        url.indexOf(marker);
 
-
-                    if (
-                        position === -1
-                    ) {
+                    if (position === -1) {
                         return null;
                     }
-
 
                     return url.substring(
                         position +
@@ -939,28 +802,19 @@ async function deleteProduct(
                     );
 
                 })
-                .filter(
-                    Boolean
-                );
+                .filter(Boolean);
 
 
-        /* =================================================
-           DELETE STORAGE IMAGES
-        ================================================= */
+        /* DELETE STORAGE IMAGES */
 
-        if (
-            filePaths.length > 0
-        ) {
+        if (filePaths.length > 0) {
 
             const {
-                error:
-                    storageError
+                error: storageError
             } =
                 await supabaseClient
                     .storage
-                    .from(
-                        "product-images"
-                    )
+                    .from("product-images")
                     .remove(
                         filePaths
                     );
@@ -972,16 +826,11 @@ async function deleteProduct(
                     "Storage delete error:",
                     storageError
                 );
-
-                // Continue deleting product
-                // even if image cleanup fails.
             }
         }
 
 
-        /* =================================================
-           DELETE DATABASE PRODUCT
-        ================================================= */
+        /* DELETE DATABASE PRODUCT */
 
         const {
             error: deleteError
@@ -1013,7 +862,6 @@ async function deleteProduct(
             "Delete error:",
             error
         );
-
 
         alert(
             "Unable to delete product:\n" +
