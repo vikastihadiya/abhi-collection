@@ -26,22 +26,28 @@ async function checkAdminLogin() {
         data: {
             session
         }
-    } = await supabaseClient.auth.getSession();
+    } =
+        await supabaseClient.auth.getSession();
 
 
     if (session) {
 
-        loginSection.style.display = "none";
+        loginSection.style.display =
+            "none";
 
-        adminContainer.style.display = "block";
+        adminContainer.style.display =
+            "block";
 
     } else {
 
-        loginSection.style.display = "block";
+        loginSection.style.display =
+            "block";
 
-        adminContainer.style.display = "none";
+        adminContainer.style.display =
+            "none";
 
     }
+
 }
 
 
@@ -49,7 +55,7 @@ async function checkAdminLogin() {
 
 loginForm.addEventListener(
     "submit",
-    async function (event) {
+    async function(event) {
 
         event.preventDefault();
 
@@ -68,7 +74,9 @@ loginForm.addEventListener(
 
 
         const loginMessage =
-            document.getElementById("loginMessage");
+            document.getElementById(
+                "loginMessage"
+            );
 
 
         loginMessage.textContent =
@@ -79,13 +87,14 @@ loginForm.addEventListener(
             data,
             error
         } =
-            await supabaseClient.auth.signInWithPassword({
+            await supabaseClient.auth
+                .signInWithPassword({
 
-                email: email,
+                    email: email,
 
-                password: password
+                    password: password
 
-            });
+                });
 
 
         if (error) {
@@ -125,11 +134,13 @@ if (forgotPasswordButton) {
 
     forgotPasswordButton.addEventListener(
         "click",
-        async function () {
+        async function() {
 
             const email =
                 document
-                    .getElementById("adminEmail")
+                    .getElementById(
+                        "adminEmail"
+                    )
                     .value
                     .trim();
 
@@ -199,21 +210,28 @@ checkAdminLogin();
 ===================================================== */
 
 const imageInput =
-    document.getElementById("productImages");
+    document.getElementById(
+        "productImages"
+    );
 
 const imagePreview =
-    document.getElementById("imagePreview");
+    document.getElementById(
+        "imagePreview"
+    );
 
 
 imageInput.addEventListener(
     "change",
-    function () {
+    function() {
 
-        imagePreview.innerHTML = "";
+        imagePreview.innerHTML =
+            "";
 
 
         const files =
-            Array.from(this.files);
+            Array.from(
+                this.files
+            );
 
 
         if (files.length > 5) {
@@ -222,38 +240,47 @@ imageInput.addEventListener(
                 "Please select maximum 5 photos."
             );
 
-            this.value = "";
+            this.value =
+                "";
 
             return;
 
         }
 
 
-        files.forEach(file => {
+        files.forEach(
+            file => {
 
-            const reader =
-                new FileReader();
-
-
-            reader.onload =
-                function (e) {
-
-                    const img =
-                        document.createElement("img");
+                const reader =
+                    new FileReader();
 
 
-                    img.src =
-                        e.target.result;
+                reader.onload =
+                    function(e) {
+
+                        const img =
+                            document.createElement(
+                                "img"
+                            );
 
 
-                    imagePreview.appendChild(img);
+                        img.src =
+                            e.target.result;
 
-                };
+
+                        imagePreview.appendChild(
+                            img
+                        );
+
+                    };
 
 
-            reader.readAsDataURL(file);
+                reader.readAsDataURL(
+                    file
+                );
 
-        });
+            }
+        );
 
     }
 );
@@ -267,14 +294,16 @@ document
     .getElementById("productForm")
     .addEventListener(
         "submit",
-        async function (event) {
+        async function(event) {
 
             event.preventDefault();
 
 
             const name =
                 document
-                    .getElementById("productName")
+                    .getElementById(
+                        "productName"
+                    )
                     .value
                     .trim();
 
@@ -282,7 +311,9 @@ document
             const price =
                 Number(
                     document
-                        .getElementById("productPrice")
+                        .getElementById(
+                            "productPrice"
+                        )
                         .value
                 );
 
@@ -290,7 +321,9 @@ document
             const mrp =
                 Number(
                     document
-                        .getElementById("productMRP")
+                        .getElementById(
+                            "productMRP"
+                        )
                         .value
                 );
 
@@ -306,14 +339,18 @@ document
 
             const sizes =
                 document
-                    .getElementById("productSizes")
+                    .getElementById(
+                        "productSizes"
+                    )
                     .value
                     .split(",")
                     .map(
-                        size => size.trim()
+                        size =>
+                            size.trim()
                     )
                     .filter(
-                        size => size !== ""
+                        size =>
+                            size !== ""
                     );
 
 
@@ -347,7 +384,7 @@ document
             }
 
 
-            /* ================= PRODUCT SAVE BUTTON ================= */
+            /* ================= SAVE BUTTON ================= */
 
             const saveButton =
                 document.querySelector(
@@ -355,7 +392,9 @@ document
                 );
 
 
-            saveButton.disabled = true;
+            saveButton.disabled =
+                true;
+
 
             saveButton.textContent =
                 "Uploading...";
@@ -376,16 +415,22 @@ document
                         .from("products")
                         .insert([
                             {
-                                name: name,
 
-                                price: price,
+                                name:
+                                    name,
 
-                                mrp: mrp,
+                                price:
+                                    price,
+
+                                mrp:
+                                    mrp,
 
                                 description:
                                     description,
 
-                                sizes: sizes
+                                sizes:
+                                    sizes
+
                             }
                         ])
                         .select()
@@ -403,7 +448,8 @@ document
                    UPLOAD IMAGES
                 ================================================= */
 
-                const imageUrls = [];
+                const imageUrls =
+                    [];
 
 
                 for (
@@ -431,16 +477,20 @@ document
                     } =
                         await supabaseClient
                             .storage
-                            .from("product-images")
+                            .from(
+                                "product-images"
+                            )
                             .upload(
                                 filePath,
                                 file,
                                 {
+
                                     cacheControl:
                                         "3600",
 
                                     upsert:
                                         false
+
                                 }
                             );
 
@@ -453,15 +503,18 @@ document
 
 
                     /* =================================================
-                       PUBLIC URL
+                       GET PUBLIC URL
                     ================================================= */
 
                     const {
-                        data: publicUrlData
+                        data:
+                            publicUrlData
                     } =
                         supabaseClient
                             .storage
-                            .from("product-images")
+                            .from(
+                                "product-images"
+                            )
                             .getPublicUrl(
                                 filePath
                             );
@@ -476,6 +529,10 @@ document
 
                 /* =================================================
                    SAVE IMAGE URLS
+                   
+                   IMPORTANT:
+                   Your database images column is TEXT.
+                   Therefore we save the array as JSON text.
                 ================================================= */
 
                 const {
@@ -484,8 +541,12 @@ document
                     await supabaseClient
                         .from("products")
                         .update({
+
                             images:
-                                imageUrls
+                                JSON.stringify(
+                                    imageUrls
+                                )
+
                         })
                         .eq(
                             "id",
@@ -499,6 +560,8 @@ document
 
                 }
 
+
+                /* ================= SUCCESS ================= */
 
                 alert(
                     "Product saved successfully!"
@@ -533,11 +596,11 @@ document
                     error.message
                 );
 
-
             } finally {
 
                 saveButton.disabled =
                     false;
+
 
                 saveButton.textContent =
                     "Save Product";
@@ -546,6 +609,81 @@ document
 
         }
     );
+
+
+/* =====================================================
+   CONVERT IMAGES TO ARRAY
+===================================================== */
+
+function getImagesArray(images) {
+
+    /* No images */
+
+    if (!images) {
+
+        return [];
+
+    }
+
+
+    /* Already an array */
+
+    if (Array.isArray(images)) {
+
+        return images;
+
+    }
+
+
+    /* Text stored in database */
+
+    if (typeof images === "string") {
+
+        try {
+
+            const parsed =
+                JSON.parse(images);
+
+
+            if (
+                Array.isArray(parsed)
+            ) {
+
+                return parsed;
+
+            }
+
+
+        } catch (error) {
+
+            /*
+               If the database contains
+               one direct URL instead of JSON.
+            */
+
+            if (
+                images.startsWith(
+                    "http://"
+                ) ||
+                images.startsWith(
+                    "https://"
+                )
+            ) {
+
+                return [
+                    images
+                ];
+
+            }
+
+        }
+
+    }
+
+
+    return [];
+
+}
 
 
 /* =====================================================
@@ -621,29 +759,49 @@ async function displayAdminProducts() {
                 "admin-product";
 
 
+            /* ================= GET IMAGE ================= */
+
+            const productImages =
+                getImagesArray(
+                    product.images
+                );
+
+
             const firstImage =
-                product.images &&
-                product.images.length > 0
-                    ? product.images[0]
+                productImages.length > 0
+                    ? productImages[0]
                     : "";
 
 
             div.innerHTML = `
 
-                <img
-                    src="${firstImage}"
-                    alt="${product.name}"
-                >
+                ${
+                    firstImage
+                        ? `
+                            <img
+                                src="${firstImage}"
+                                alt="${product.name || "Product"}"
+                            >
+                        `
+                        : `
+                            <div class="no-image">
+                                No Image
+                            </div>
+                        `
+                }
+
 
                 <div class="admin-product-info">
 
                     <h3>
-                        ${product.name}
+                        ${product.name || ""}
                     </h3>
 
+
                     <p>
-                        ₹${product.price}
+                        ₹${product.price || 0}
                     </p>
+
 
                     <button
                         class="delete-button"
@@ -692,7 +850,9 @@ async function deleteProduct(
     try {
 
 
-        /* ================= GET PRODUCT ================= */
+        /* =================================================
+           GET PRODUCT
+        ================================================= */
 
         const {
             data: product,
@@ -715,15 +875,29 @@ async function deleteProduct(
         }
 
 
-        /* ================= DELETE IMAGES ================= */
+        /* =================================================
+           CONVERT IMAGES TO ARRAY
+           
+           This fixes:
+           "product.images.map is not a function"
+        ================================================= */
+
+        const productImages =
+            getImagesArray(
+                product.images
+            );
+
+
+        /* =================================================
+           DELETE IMAGES FROM STORAGE
+        ================================================= */
 
         if (
-            product.images &&
-            product.images.length > 0
+            productImages.length > 0
         ) {
 
             const filePaths =
-                product.images
+                productImages
                     .map(
                         url => {
 
@@ -737,12 +911,19 @@ async function deleteProduct(
                                 );
 
 
-                            return position !== -1
-                                ? url.substring(
-                                    position +
-                                    marker.length
-                                )
-                                : null;
+                            if (
+                                position === -1
+                            ) {
+
+                                return null;
+
+                            }
+
+
+                            return url.substring(
+                                position +
+                                marker.length
+                            );
 
                         }
                     )
@@ -756,7 +937,8 @@ async function deleteProduct(
             ) {
 
                 const {
-                    error: storageError
+                    error:
+                        storageError
                 } =
                     await supabaseClient
                         .storage
@@ -779,10 +961,13 @@ async function deleteProduct(
         }
 
 
-        /* ================= DELETE PRODUCT ================= */
+        /* =================================================
+           DELETE PRODUCT FROM DATABASE
+        ================================================= */
 
         const {
-            error: deleteError
+            error:
+                deleteError
         } =
             await supabaseClient
                 .from("products")
@@ -800,13 +985,16 @@ async function deleteProduct(
         }
 
 
+        /* ================= SUCCESS ================= */
+
         alert(
             "Product deleted successfully!"
         );
 
 
-        displayAdminProducts();
+        /* ================= REFRESH PRODUCT LIST ================= */
 
+        displayAdminProducts();
 
     } catch (error) {
 
