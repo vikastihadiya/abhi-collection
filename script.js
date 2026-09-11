@@ -1,42 +1,36 @@
 /* =====================================================
-ABHI COLLECTION
-MEN'S CLOTHING WEBSITE
-PRODUCTS WILL BE ADDED THROUGH ADMIN PANEL
+   ABHI COLLECTION
+   MEN'S CLOTHING WEBSITE
+   PRODUCTS LOADED FROM SUPABASE
 ===================================================== */
 
-/* ================= PRODUCTS ================= */
-/*
-IMPORTANT:
-There are currently NO sample products.
 
-Later:
-Firebase will provide the real products
-uploaded from the Admin Panel.
-*/
+/* ================= SUPABASE PRODUCTS ================= */
 
-const products = [];
+let products = [];
+
 
 /* ================= CART ================= */
 
 let cart =
-JSON.parse(
-localStorage.getItem("abhiCart")
-) || [];
-
-/* ================= DISPLAY PRODUCTS ================= */
-
-function displayProducts() {
-
-```
-const grid =
-    document.getElementById("productGrid");
-
-grid.innerHTML = "";
+    JSON.parse(
+        localStorage.getItem("abhiCart")
+    ) || [];
 
 
-/* No products uploaded yet */
+/* ================= LOAD PRODUCTS ================= */
 
-if (products.length === 0) {
+async function loadProducts() {
+
+    const grid =
+        document.getElementById("productGrid");
+
+    if (!grid) {
+        return;
+    }
+
+
+    /* Show loading message */
 
     grid.innerHTML = `
 
@@ -47,421 +41,701 @@ if (products.length === 0) {
             </div>
 
             <h3>
-                Collection Coming Soon
+                Loading Collection...
             </h3>
 
             <p>
-                Our latest men's clothing collection
-                will be available here soon.
-            </p>
-
-            <p>
-                Stay connected with Abhi Collection
-                for new arrivals.
+                Please wait while we load our
+                latest products.
             </p>
 
         </div>
 
     `;
 
-    return;
-}
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("products")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
 
 
-/* Display real products later */
+        /* ================= ERROR ================= */
 
-products.forEach(product => {
+        if (error) {
 
-    const card =
-        document.createElement("div");
+            console.error(
+                "Supabase product error:",
+                error
+            );
 
-    card.className =
-        "product-card";
+            grid.innerHTML = `
+
+                <div class="empty-collection">
+
+                    <div class="empty-icon">
+                        ⚠️
+                    </div>
+
+                    <h3>
+                        Unable to load products
+                    </h3>
+
+                    <p>
+                        Please refresh the page
+                        and try again.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+        }
 
 
-    card.innerHTML = `
+        /* Save products */
 
-        <div class="product-image">
-
-            <img
-                src="${product.images[0]}"
-                alt="${product.name}"
-            >
-
-        </div>
+        products =
+            data || [];
 
 
-        <div class="product-info">
+        /* Display products */
 
-            <h3>
-                ${product.name}
-            </h3>
+        displayProducts();
 
 
-            <p class="product-description">
-                ${product.description}
-            </p>
+    } catch (error) {
+
+        console.error(
+            "Product loading error:",
+            error
+        );
 
 
-            <div class="price">
+        grid.innerHTML = `
 
-                <span class="sale-price">
-                    ₹${product.price}
-                </span>
+            <div class="empty-collection">
 
-                <span class="mrp">
-                    ₹${product.mrp}
-                </span>
+                <div class="empty-icon">
+                    ⚠️
+                </div>
+
+                <h3>
+                    Something went wrong
+                </h3>
+
+                <p>
+                    Please refresh the website
+                    and try again.
+                </p>
 
             </div>
 
+        `;
 
-            <div class="sizes">
+    }
 
-                <strong>Sizes:</strong>
+}
 
-                ${product.sizes.join(", ")}
+
+/* ================= DISPLAY PRODUCTS ================= */
+
+function displayProducts() {
+
+    const grid =
+        document.getElementById("productGrid");
+
+
+    if (!grid) {
+        return;
+    }
+
+
+    grid.innerHTML = "";
+
+
+    /* ================= NO PRODUCTS ================= */
+
+    if (products.length === 0) {
+
+        grid.innerHTML = `
+
+            <div class="empty-collection">
+
+                <div class="empty-icon">
+                    👔
+                </div>
+
+                <h3>
+                    Collection Coming Soon
+                </h3>
+
+                <p>
+                    Our latest men's clothing
+                    collection will be available here soon.
+                </p>
+
+                <p>
+                    Stay connected with
+                    Abhi Collection for new arrivals.
+                </p>
 
             </div>
 
+        `;
 
-            <button
-                class="add-cart"
-                onclick="addToCart(${product.id})">
-
-                Add to Cart
-
-            </button>
-
-        </div>
-
-    `;
+        return;
+    }
 
 
-    grid.appendChild(card);
+    /* ================= DISPLAY PRODUCTS ================= */
 
-});
-```
+    products.forEach(
+        function(product) {
+
+
+            const card =
+                document.createElement("div");
+
+
+            card.className =
+                "product-card";
+
+
+            /* Make sure image exists */
+
+            const firstImage =
+                product.images &&
+                product.images.length > 0
+                    ? product.images[0]
+                    : "";
+
+
+            /* Make sure sizes exist */
+
+            let sizesText = "";
+
+
+            if (
+                Array.isArray(product.sizes)
+            ) {
+
+                sizesText =
+                    product.sizes.join(", ");
+
+            } else if (
+                typeof product.sizes === "string"
+            ) {
+
+                sizesText =
+                    product.sizes;
+
+            }
+
+
+            card.innerHTML = `
+
+                <div class="product-image">
+
+                    <img
+                        src="${firstImage}"
+                        alt="${product.name}"
+                        loading="lazy"
+                    >
+
+                </div>
+
+
+                <div class="product-info">
+
+                    <h3>
+                        ${product.name}
+                    </h3>
+
+
+                    <p class="product-description">
+                        ${product.description || ""}
+                    </p>
+
+
+                    <div class="price">
+
+                        <span class="sale-price">
+                            ₹${product.price}
+                        </span>
+
+
+                        <span class="mrp">
+                            ₹${product.mrp}
+                        </span>
+
+                    </div>
+
+
+                    ${
+                        sizesText
+                            ? `
+                                <div class="sizes">
+
+                                    <strong>
+                                        Sizes:
+                                    </strong>
+
+                                    ${sizesText}
+
+                                </div>
+                            `
+                            : ""
+                    }
+
+
+                    <button
+                        class="add-cart"
+                        onclick="addToCart(${product.id})">
+
+                        Add to Cart
+
+                    </button>
+
+                </div>
+
+            `;
+
+
+            grid.appendChild(card);
+
+        }
+    );
 
 }
+
 
 /* ================= ADD TO CART ================= */
 
 function addToCart(productId) {
 
-```
-const product =
-    products.find(
-        p => p.id === productId
-    );
+    const product =
+        products.find(
+            function(p) {
+                return p.id === productId;
+            }
+        );
 
 
-if (!product) {
-    return;
+    if (!product) {
+
+        console.error(
+            "Product not found:",
+            productId
+        );
+
+        return;
+
+    }
+
+
+    const existing =
+        cart.find(
+            function(item) {
+                return item.id === productId;
+            }
+        );
+
+
+    if (existing) {
+
+        existing.quantity++;
+
+    } else {
+
+        cart.push({
+
+            id:
+                product.id,
+
+            name:
+                product.name,
+
+            price:
+                Number(product.price),
+
+            image:
+                product.images &&
+                product.images.length > 0
+                    ? product.images[0]
+                    : "",
+
+            quantity:
+                1
+
+        });
+
+    }
+
+
+    saveCart();
+
+    updateCart();
+
+    openCart();
+
 }
 
-
-const existing =
-    cart.find(
-        item => item.id === productId
-    );
-
-
-if (existing) {
-
-    existing.quantity++;
-
-} else {
-
-    cart.push({
-
-        id: product.id,
-
-        name: product.name,
-
-        price: product.price,
-
-        image: product.images[0],
-
-        quantity: 1
-
-    });
-
-}
-
-
-saveCart();
-
-updateCart();
-
-openCart();
-```
-
-}
 
 /* ================= SAVE CART ================= */
 
 function saveCart() {
 
-```
-localStorage.setItem(
-    "abhiCart",
-    JSON.stringify(cart)
-);
-```
+    localStorage.setItem(
+        "abhiCart",
+        JSON.stringify(cart)
+    );
 
 }
+
 
 /* ================= UPDATE CART ================= */
 
 function updateCart() {
 
-```
-const cartItems =
-    document.getElementById(
-        "cartItems"
+    const cartItems =
+        document.getElementById(
+            "cartItems"
+        );
+
+
+    const cartCount =
+        document.getElementById(
+            "cartCount"
+        );
+
+
+    const cartTotal =
+        document.getElementById(
+            "cartTotal"
+        );
+
+
+    if (
+        !cartItems ||
+        !cartCount ||
+        !cartTotal
+    ) {
+
+        return;
+
+    }
+
+
+    cartItems.innerHTML = "";
+
+
+    let total = 0;
+
+    let count = 0;
+
+
+    cart.forEach(
+        function(item, index) {
+
+
+            total +=
+                Number(item.price) *
+                item.quantity;
+
+
+            count +=
+                item.quantity;
+
+
+            const div =
+                document.createElement("div");
+
+
+            div.className =
+                "cart-item";
+
+
+            div.innerHTML = `
+
+                <img
+                    src="${item.image}"
+                    alt="${item.name}"
+                >
+
+
+                <div class="cart-item-info">
+
+                    <h4>
+                        ${item.name}
+                    </h4>
+
+
+                    <p>
+                        ₹${item.price}
+                    </p>
+
+
+                    <div class="quantity">
+
+                        <button
+                            onclick="changeQuantity(${index}, -1)">
+
+                            −
+
+                        </button>
+
+
+                        <span>
+                            ${item.quantity}
+                        </span>
+
+
+                        <button
+                            onclick="changeQuantity(${index}, 1)">
+
+                            +
+
+                        </button>
+
+
+                        <button
+                            class="remove"
+                            onclick="removeItem(${index})">
+
+                            Remove
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            cartItems.appendChild(div);
+
+        }
     );
 
-const cartCount =
-    document.getElementById(
-        "cartCount"
-    );
 
-const cartTotal =
-    document.getElementById(
-        "cartTotal"
-    );
+    cartCount.innerText =
+        count;
 
 
-cartItems.innerHTML = "";
-
-
-let total = 0;
-
-let count = 0;
-
-
-cart.forEach((item, index) => {
-
-    total +=
-        item.price *
-        item.quantity;
-
-    count +=
-        item.quantity;
-
-
-    const div =
-        document.createElement("div");
-
-    div.className =
-        "cart-item";
-
-
-    div.innerHTML = `
-
-        <img
-            src="${item.image}"
-            alt="${item.name}"
-        >
-
-
-        <div class="cart-item-info">
-
-            <h4>
-                ${item.name}
-            </h4>
-
-            <p>
-                ₹${item.price}
-            </p>
-
-
-            <div class="quantity">
-
-                <button
-                    onclick="changeQuantity(${index}, -1)">
-                    −
-                </button>
-
-                <span>
-                    ${item.quantity}
-                </span>
-
-                <button
-                    onclick="changeQuantity(${index}, 1)">
-                    +
-                </button>
-
-
-                <button
-                    class="remove"
-                    onclick="removeItem(${index})">
-
-                    Remove
-
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
-
-
-    cartItems.appendChild(div);
-
-});
-
-
-cartCount.innerText =
-    count;
-
-cartTotal.innerText =
-    "₹" + total;
-```
+    cartTotal.innerText =
+        "₹" + total;
 
 }
+
 
 /* ================= CHANGE QUANTITY ================= */
 
-function changeQuantity(index, change) {
+function changeQuantity(
+    index,
+    change
+) {
 
-```
-if (!cart[index]) {
-    return;
+    if (!cart[index]) {
+
+        return;
+
+    }
+
+
+    cart[index].quantity +=
+        change;
+
+
+    if (
+        cart[index].quantity <= 0
+    ) {
+
+        cart.splice(
+            index,
+            1
+        );
+
+    }
+
+
+    saveCart();
+
+    updateCart();
+
 }
 
-
-cart[index].quantity +=
-    change;
-
-
-if (cart[index].quantity <= 0) {
-
-    cart.splice(index, 1);
-
-}
-
-
-saveCart();
-
-updateCart();
-```
-
-}
 
 /* ================= REMOVE ITEM ================= */
 
 function removeItem(index) {
 
-```
-cart.splice(index, 1);
+    if (!cart[index]) {
 
-saveCart();
+        return;
 
-updateCart();
-```
+    }
+
+
+    cart.splice(
+        index,
+        1
+    );
+
+
+    saveCart();
+
+    updateCart();
 
 }
+
 
 /* ================= OPEN CART ================= */
 
 function openCart() {
 
-```
-document
-    .getElementById("cartOverlay")
-    .classList.add("active");
-```
+    const overlay =
+        document.getElementById(
+            "cartOverlay"
+        );
+
+
+    if (overlay) {
+
+        overlay.classList.add(
+            "active"
+        );
+
+    }
 
 }
+
 
 /* ================= CLOSE CART ================= */
 
 function closeCart() {
 
-```
-document
-    .getElementById("cartOverlay")
-    .classList.remove("active");
-```
+    const overlay =
+        document.getElementById(
+            "cartOverlay"
+        );
+
+
+    if (overlay) {
+
+        overlay.classList.remove(
+            "active"
+        );
+
+    }
 
 }
+
 
 /* ================= WHATSAPP ORDER ================= */
 
-function orderWhatsApp(phoneNumber) {
+function orderWhatsApp(
+    phoneNumber
+) {
 
-```
-if (cart.length === 0) {
+    if (
+        cart.length === 0
+    ) {
 
-    alert(
-        "Your cart is empty."
+        alert(
+            "Your cart is empty."
+        );
+
+        return;
+
+    }
+
+
+    let message =
+        "Hello Abhi Collection!%0A%0A";
+
+
+    message +=
+        "*I want to order the following products:*%0A%0A";
+
+
+    let total = 0;
+
+
+    cart.forEach(
+        function(item, index) {
+
+
+            const itemTotal =
+                Number(item.price) *
+                item.quantity;
+
+
+            total +=
+                itemTotal;
+
+
+            message +=
+                `${index + 1}. ${item.name}%0A`;
+
+
+            message +=
+                `Quantity: ${item.quantity}%0A`;
+
+
+            message +=
+                `Price: ₹${item.price}%0A`;
+
+
+            message +=
+                `Subtotal: ₹${itemTotal}%0A%0A`;
+
+        }
     );
 
-    return;
+
+    message +=
+        `*Total: ₹${total}*%0A%0A`;
+
+
+    message +=
+        "Please confirm my order.";
+
+
+    const whatsappURL =
+        `https://wa.me/91${phoneNumber}?text=${message}`;
+
+
+    window.open(
+        whatsappURL,
+        "_blank"
+    );
 
 }
 
-
-let message =
-    "Hello Abhi Collection!%0A%0A";
-
-message +=
-    "*I want to order the following products:*%0A%0A";
-
-
-let total = 0;
-
-
-cart.forEach((item, index) => {
-
-    const itemTotal =
-        item.price *
-        item.quantity;
-
-    total +=
-        itemTotal;
-
-
-    message +=
-        `${index + 1}. ${item.name}%0A`;
-
-    message +=
-        `Quantity: ${item.quantity}%0A`;
-
-    message +=
-        `Price: ₹${item.price}%0A`;
-
-    message +=
-        `Subtotal: ₹${itemTotal}%0A%0A`;
-
-});
-
-
-message +=
-    `*Total: ₹${total}*%0A%0A`;
-
-message +=
-    "Please confirm my order.";
-
-
-const whatsappURL =
-    `https://wa.me/91${phoneNumber}?text=${message}`;
-
-
-window.open(
-    whatsappURL,
-    "_blank"
-);
-```
-
-}
 
 /* ================= INITIALIZE ================= */
 
-displayProducts();
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
 
-updateCart();
+        updateCart();
 
+        loadProducts();
+
+    }
+);
